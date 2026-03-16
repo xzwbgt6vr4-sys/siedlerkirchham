@@ -1,0 +1,1146 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<link rel="manifest" href="manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Siedler von Kirchham">
+<link rel="apple-touch-icon" href="icon-192.png">
+
+<title>Siedler von Kirchham</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;800&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:       #0b1826;
+  --bg2:      #101f30;
+  --bg3:      #162840;
+  --gold:     #d4952a;
+  --gold-lt:  #f0b840;
+  --gold-dk:  #9a6010;
+  --text:     #e8dcc0;
+  --dim:      #8aa0b8;
+  --border:   rgba(180,140,50,0.22);
+  --panel:    rgba(10,25,45,0.88);
+  --green:    #3a7a28;
+  --red:      #aa2222;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:'Crimson Text',Georgia,serif;
+  min-height:100vh;
+  overflow-x:hidden;
+}
+
+/* HEADER */
+header{
+  text-align:center;
+  padding:26px 16px 16px;
+  position:relative;
+}
+header::after{
+  content:'';display:block;height:1px;
+  background:linear-gradient(90deg,transparent,var(--gold),transparent);
+  margin-top:14px;
+}
+h1{
+  font-family:'Cinzel',serif;
+  font-size:clamp(19px,5vw,32px);
+  font-weight:800;
+  color:var(--gold-lt);
+  letter-spacing:0.1em;
+  line-height:1.1;
+}
+h1 span{
+  color:var(--dim);font-weight:400;
+  font-size:0.52em;display:block;
+  letter-spacing:0.25em;margin-top:4px;
+}
+
+/* LAYOUT */
+.app{
+  display:flex;flex-direction:column;align-items:center;
+  gap:0;padding:0 12px 40px;
+  max-width:960px;margin:0 auto;
+}
+
+/* PLAYER SELECTOR */
+.player-row{
+  display:flex;gap:10px;margin:16px 0 0;width:100%;
+  justify-content:center;
+}
+.player-btn{
+  flex:1;max-width:200px;
+  padding:11px 16px;
+  font-family:'Cinzel',serif;font-size:13px;font-weight:600;
+  letter-spacing:0.06em;cursor:pointer;
+  border-radius:10px;
+  border:1.5px solid var(--border);
+  background:rgba(255,255,255,0.04);
+  color:var(--dim);
+  transition:all 0.18s;
+}
+.player-btn:hover{background:rgba(255,255,255,0.08);color:var(--text);}
+.player-btn.active{
+  border-color:var(--gold);
+  background:rgba(180,140,50,0.12);
+  color:var(--gold-lt);
+  box-shadow:0 0 16px rgba(180,130,0,0.2);
+}
+
+/* SETTINGS */
+.settings{
+  width:100%;
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:16px 18px;
+  margin:12px 0;
+  backdrop-filter:blur(4px);
+}
+.s-title{
+  font-family:'Cinzel',serif;font-size:10px;
+  letter-spacing:0.25em;color:var(--gold);
+  text-transform:uppercase;margin-bottom:12px;
+  display:flex;align-items:center;gap:8px;
+}
+.s-title::before,.s-title::after{content:'';flex:1;height:1px;background:var(--border);}
+.rules-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(230px,1fr));
+  gap:7px;
+}
+.rule-toggle{
+  display:flex;align-items:flex-start;gap:9px;
+  padding:9px 11px;border-radius:8px;
+  border:1px solid var(--border);
+  background:rgba(255,255,255,0.03);
+  cursor:pointer;transition:all 0.15s;user-select:none;
+}
+.rule-toggle:hover{background:rgba(255,255,255,0.06);}
+.rule-toggle.active{border-color:rgba(180,140,50,0.5);background:rgba(180,140,50,0.08);}
+.rule-toggle.disabled{opacity:0.35;cursor:not-allowed;pointer-events:none;}
+.tbox{
+  width:17px;height:17px;border-radius:4px;
+  border:1.5px solid var(--gold-dk);
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;margin-top:2px;transition:background 0.15s;
+}
+.rule-toggle.active .tbox{background:var(--gold);border-color:var(--gold);}
+.tcheck{color:#1a0800;font-size:10px;font-weight:bold;display:none;}
+.rule-toggle.active .tcheck{display:block;}
+.rtext{font-size:13px;line-height:1.35;color:var(--text);}
+.rtext small{display:block;font-size:11px;color:var(--dim);margin-top:1px;font-style:italic;}
+
+
+
+/* GEN BUTTON */
+.gen-row{
+  display:flex;align-items:center;gap:12px;
+  width:100%;margin-bottom:12px;flex-wrap:wrap;
+}
+#gen-btn{
+  flex:1;min-width:160px;
+  background:linear-gradient(135deg,#a06010,#d4952a,#f0b840,#d4952a,#a06010);
+  background-size:200% auto;
+  color:#1a0800;border:none;border-radius:10px;
+  padding:13px 24px;
+  font-family:'Cinzel',serif;font-size:14px;font-weight:600;
+  letter-spacing:0.08em;cursor:pointer;
+  transition:background-position 0.4s,transform 0.1s,box-shadow 0.2s;
+  box-shadow:0 4px 20px rgba(180,130,0,0.3);
+}
+#gen-btn:hover{background-position:right center;box-shadow:0 6px 28px rgba(180,130,0,0.45);}
+#gen-btn:active{transform:scale(0.98);}
+#gen-btn:disabled{background:#2a3040;color:#556;box-shadow:none;cursor:not-allowed;}
+.status{font-size:13px;color:var(--dim);font-style:italic;min-width:150px;}
+.status.ok{color:#6aba60;}
+.status.fail{color:#cc5050;}
+
+/* BOARD */
+#board-wrap{
+  width:100%;
+  background:radial-gradient(ellipse 80% 60% at 50% 42%,#1a4870 0%,#091e38 70%,#050f1c 100%);
+  border-radius:20px;padding:14px;
+  border:1px solid var(--border);
+  box-shadow:0 12px 60px rgba(0,0,0,0.6),inset 0 0 40px rgba(0,40,80,0.3);
+  overflow:auto;position:relative;
+}
+#board-wrap::before{
+  content:'';position:absolute;inset:0;border-radius:20px;
+  background:repeating-linear-gradient(60deg,transparent,transparent 30px,rgba(255,255,255,0.006) 30px,rgba(255,255,255,0.006) 31px);
+  pointer-events:none;
+}
+svg{display:block;margin:0 auto;}
+
+/* LEGEND */
+#legend{
+  display:flex;flex-wrap:wrap;gap:6px;
+  justify-content:center;margin-top:12px;width:100%;
+}
+.leg{
+  display:flex;align-items:center;gap:5px;
+  background:rgba(255,255,255,0.05);
+  border:1px solid var(--border);border-radius:7px;
+  padding:3px 10px;font-size:12px;color:var(--dim);
+}
+.ld{width:11px;height:11px;border-radius:3px;flex-shrink:0;}
+
+@keyframes spin{to{transform:rotate(360deg);}}
+@keyframes fadeDisable{0%{background:rgba(200,80,40,0.3);}100%{background:transparent;}}
+.rule-auto-disabled{animation:fadeDisable 2s ease forwards;}
+.spinner{
+  display:inline-block;width:13px;height:13px;
+  border:2px solid rgba(180,140,50,0.3);border-top-color:var(--gold);
+  border-radius:50%;animation:spin 0.7s linear infinite;
+  vertical-align:middle;margin-right:5px;
+}
+
+/* LOCATION PICKER */
+#location-overlay{
+  position:fixed;inset:0;
+  background:rgba(5,12,24,0.96);
+  display:flex;align-items:center;justify-content:center;
+  z-index:1000;
+  padding:24px;
+}
+.loc-card{
+  background:var(--bg2);
+  border:1px solid var(--border);
+  border-radius:18px;
+  padding:36px 32px 32px;
+  max-width:420px;width:100%;
+  text-align:center;
+  box-shadow:0 16px 60px rgba(0,0,0,0.7);
+}
+.loc-question{
+  font-family:'Cinzel',serif;
+  font-size:clamp(14px,3.5vw,20px);
+  color:var(--gold-lt);
+  letter-spacing:0.08em;
+  margin-bottom:6px;
+}
+.loc-sub{
+  font-size:13px;color:var(--dim);
+  margin-bottom:24px;font-style:italic;
+}
+.loc-choices{
+  display:flex;gap:10px;justify-content:center;
+  flex-wrap:wrap;margin-bottom:20px;
+}
+.loc-btn{
+  padding:10px 22px;
+  font-family:'Cinzel',serif;font-size:13px;font-weight:600;
+  letter-spacing:0.06em;cursor:pointer;
+  border-radius:10px;
+  border:1.5px solid var(--border);
+  background:rgba(255,255,255,0.04);
+  color:var(--dim);
+  transition:all 0.18s;
+}
+.loc-btn:hover{
+  background:rgba(180,140,50,0.12);
+  border-color:var(--gold);color:var(--gold-lt);
+}
+.loc-divider{
+  display:flex;align-items:center;gap:10px;
+  margin-bottom:16px;color:var(--dim);font-size:12px;
+}
+.loc-divider::before,.loc-divider::after{
+  content:'';flex:1;height:1px;background:var(--border);
+}
+.loc-input-row{
+  display:flex;gap:8px;
+}
+.loc-input{
+  flex:1;
+  background:rgba(255,255,255,0.05);
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:9px 12px;
+  color:var(--text);
+  font-family:'Crimson Text',Georgia,serif;
+  font-size:14px;
+  outline:none;
+  transition:border-color 0.15s;
+}
+.loc-input:focus{border-color:var(--gold);}
+.loc-input::placeholder{color:var(--dim);}
+.loc-confirm{
+  padding:9px 18px;
+  font-family:'Cinzel',serif;font-size:13px;font-weight:600;
+  cursor:pointer;border:none;border-radius:8px;
+  background:linear-gradient(135deg,#a06010,#d4952a);
+  color:#1a0800;
+  transition:opacity 0.15s;
+  white-space:nowrap;
+}
+.loc-confirm:hover{opacity:0.85;}
+
+@media print{
+  body{background:white;color:#222;}
+  header{background:none;}
+  h1,h1 span{color:#333;}
+  .player-row,.settings,.gen-row{display:none!important;}
+  #board-wrap{background:#ddeeff;box-shadow:none;border:2px solid #aac;}
+  .leg{background:#eee;color:#333;border-color:#ccc;}
+}
+</style>
+</head>
+<body>
+
+<!-- Location picker overlay -->
+<div id="location-overlay">
+  <div class="loc-card">
+    <div class="loc-question">Wo wird gesiedelt?</div>
+    <div class="loc-sub">Wähle einen Ort oder gib deinen eigenen ein</div>
+    <div class="loc-choices">
+      <button class="loc-btn" onclick="chooseLocation('Kirchham')">Kirchham</button>
+      <button class="loc-btn" onclick="chooseLocation('Berlin')">Berlin</button>
+    </div>
+    <div class="loc-divider">oder</div>
+    <div class="loc-input-row">
+      <input class="loc-input" id="loc-custom" type="text" placeholder="Anderer Ort…" maxlength="40"
+        onkeydown="if(event.key==='Enter') confirmCustomLocation()">
+      <button class="loc-confirm" onclick="confirmCustomLocation()">Los!</button>
+    </div>
+  </div>
+</div>
+
+<header>
+  <h1 id="main-title">Siedler von Kirchham<span>Spielfeldgenerator</span></h1>
+</header>
+
+<div class="app">
+
+  <!-- Player count -->
+  <div class="player-row">
+    <button class="player-btn" id="btn-4" onclick="setMode(4)">1 – 4 Spieler</button>
+    <button class="player-btn active" id="btn-6" onclick="setMode(6)">5 – 6 Spieler</button>
+  </div>
+
+  <!-- Settings -->
+  <div class="settings">
+    <div class="s-title">Bedingungen</div>
+    <div class="rules-grid" id="rules-grid"></div>
+  </div>
+
+  <!-- Generate -->
+  <div class="gen-row">
+    <button id="gen-btn">&#9881; Neues Spielfeld</button>
+    <div class="status" id="status">Bereit</div>
+  </div>
+
+  <!-- Board -->
+  <div id="board-wrap"><svg id="brd"></svg></div>
+  <div id="legend"></div>
+</div>
+
+<script>
+// ── BOARD CONFIGS ─────────────────────────────────────────────────────────────
+var MODE = 6; // 4 or 6
+
+var LAYOUTS = {
+  4: [[0,1,2],[3,4,5,6],[7,8,9,10,11],[12,13,14,15],[16,17,18]],
+  6: [[0,1,2],[3,4,5,6],[7,8,9,10,11],[12,13,14,15,16,17],[18,19,20,21,22],[23,24,25,26],[27,28,29]]
+};
+
+var POOLS = {
+  4: ['wood','wood','wood','wood','wheat','wheat','wheat','wheat','sheep','sheep','sheep','sheep','brick','brick','brick','ore','ore','ore','desert'],
+  6: ['wood','wood','wood','wood','wood','wood','sheep','sheep','sheep','sheep','sheep','sheep','wheat','wheat','wheat','wheat','wheat','wheat','ore','ore','ore','ore','ore','brick','brick','brick','brick','brick','desert','desert']
+};
+
+// Tokens: 4p=18 land tiles, 6p=28 land tiles
+var TOKENS = {
+  4: [2,3,3,4,4,5,5,6,6,8,8,9,9,10,10,11,11,12],
+  6: [2,2,2,3,3,3,4,4,4,5,5,5,6,6,6,8,8,8,9,9,9,10,10,10,11,11,12,12]
+};
+
+// ── HARBOR / SEA RING ─────────────────────────────────────────────────────────
+// Mathematically verified: only true outer positions (no land overlap).
+// Clockwise order. Every 2nd slot = harbor (step=2), gaps = water.
+
+// 1-4 player: 22 outer sea hexes, 9 harbors at even indices [0,2,4,6,8,10,12,14,16]
+var SEA_RING_4 = [
+  {hex:1,edge:5},{hex:2,edge:4},
+  {hex:2,edge:5},{hex:2,edge:0},
+  {hex:6,edge:0},{hex:11,edge:0},
+  {hex:11,edge:1},{hex:15,edge:1},
+  {hex:18,edge:1},{hex:18,edge:2},
+  {hex:17,edge:1},{hex:17,edge:2},
+  {hex:16,edge:1},{hex:16,edge:2},
+  {hex:12,edge:2},{hex:7,edge:2},
+  {hex:7,edge:3},{hex:3,edge:3},
+  {hex:0,edge:3},{hex:0,edge:4},
+  {hex:0,edge:5},{hex:1,edge:4}
+];
+var HARBOR_INDICES_4 = [0,2,4,6,8,10,12,14,16];
+
+// 5-6 player: 26 outer sea hexes, 11 harbors at even indices [0,2,4,6,8,10,12,14,16,18,20]
+var SEA_RING_6 = [
+  {hex:1,edge:5},{hex:2,edge:4},
+  {hex:2,edge:5},{hex:2,edge:0},
+  {hex:6,edge:0},{hex:11,edge:0},
+  {hex:17,edge:0},{hex:17,edge:1},
+  {hex:22,edge:1},{hex:26,edge:1},
+  {hex:29,edge:1},{hex:29,edge:2},
+  {hex:28,edge:1},{hex:28,edge:2},
+  {hex:27,edge:1},{hex:27,edge:2},
+  {hex:23,edge:2},{hex:18,edge:2},
+  {hex:12,edge:2},{hex:12,edge:3},
+  {hex:7,edge:3},{hex:3,edge:3},
+  {hex:0,edge:3},{hex:0,edge:4},
+  {hex:0,edge:5},{hex:1,edge:4}
+];
+var HARBOR_INDICES_6 = [0,2,4,6,8,10,12,14,16,18,20];
+
+// Harbor type pools per mode
+// 5-6: wood:1 brick:1 wheat:1 sheep:2 ore:1 = 6 specific + 3:1:5 = 11 total
+// 1-4: wood:1 brick:1 wheat:1 sheep:1 ore:1 = 5 specific + 3:1:4 = 9 total
+var HARBOR_TYPES = {
+  4: ['wood','brick','wheat','sheep','ore','3:1','3:1','3:1','3:1'],
+  6: ['wood','brick','wheat','sheep','sheep','ore','3:1','3:1','3:1','3:1','3:1']
+};
+
+var HARBOR_RES = {wood:'wood',brick:'brick',wheat:'wheat',sheep:'sheep',ore:'ore','3:1':null};
+var HARBOR_COLORS = {
+  wood:'#2a5e1a', brick:'#8b3510', wheat:'#c47f08',
+  sheep:'#4f8030', ore:'#424268', '3:1':'#1a3a5a'
+};
+var HARBOR_LABELS = {
+  wood:'2:1 Holz', brick:'2:1 Lehm', wheat:'2:1 Getreide',
+  sheep:'2:1 Wolle', ore:'2:1 Erz', '3:1':'3:1'
+};
+
+var GOOD = {6:1,8:1}, BAD = {2:1,12:1};
+var RESOURCES = ['wood','sheep','wheat','ore','brick'];
+var RESINFO = {
+  wood:  {color:'#2a5e1a',label:'Holz'},
+  brick: {color:'#8b3510',label:'Lehm'},
+  wheat: {color:'#c47f08',label:'Getreide'},
+  sheep: {color:'#4f8030',label:'Wolle'},
+  ore:   {color:'#424268',label:'Erz'},
+  desert:{color:'#a8925a',label:'Wüste'}
+};
+var DOTS = {2:1,3:2,4:3,5:4,6:5,8:5,9:4,10:3,11:2,12:1};
+
+// ── RULES ─────────────────────────────────────────────────────────────────────
+var RULE_DEFS = [
+  {id:'no_same_res',    label:'Gleiche Rohstoffe nie benachbart',      hint:'Kein Feld berührt ein gleiches',              def:false},
+  {id:'no_adj_good',   label:'6 und 8 nie nebeneinander',             hint:'Keine zwei hohen Zahlen benachbart',          def:false},
+  {id:'no_adj_bad',    label:'2 und 12 nie nebeneinander',            hint:'Keine zwei niedrigen Zahlen benachbart',      def:false},
+  {id:'no_dup_on_res', label:'Keine gleiche Zahl auf einem Rohstoff', hint:'Jede Zahl pro Rohstoff nur einmal',           def:false},
+  {id:'each_res_good', label:'Jeder Rohstoff mind. eine 6 oder 8',    hint:'Gleichmäßige gute Zahlen verteilt',          def:false,  only6:true},
+  {id:'good_gets_bad', label:'6/8 gepaart: genau eine 2 oder 12',    hint:'Rohstoff mit 6/8 bekommt auch genau eine 2 oder 12 – aber nicht beides', def:false, only4:true},
+  {id:'no_double_good',label:'Kein Rohstoff mit 6 und 8 zusammen',    hint:'Kein Rohstoff bekommt sowohl 6 als auch 8',           def:false,  only4:true},
+  {id:'desert_center', label:'Wüste in der Mitte',                    hint:'Wüste fest im Mittelfeld platzieren',        def:false, only4:true},
+  {id:'no_adj_same',   label:'Gleiche Zahlen nie benachbart',         hint:'Extra-streng: kein Zahlenpaar nebeneinander',def:false},
+  {id:'show_harbors',  label:'Häfen anzeigen',                        hint:'Hafensymbole am Spielfeldrand einblenden',   def:false},
+];
+
+var active = {};
+RULE_DEFS.forEach(function(r){active[r.id]=r.def;});
+
+// ── BUILD ADJ ─────────────────────────────────────────────────────────────────
+function buildAdj(layout) {
+  var all = [];
+  for (var r=0;r<layout.length;r++) for (var c=0;c<layout[r].length;c++) all.push(layout[r][c]);
+  var adj = {};
+  all.forEach(function(hid){adj[hid]=[];});
+  layout.forEach(function(row,r){
+    row.forEach(function(hid,c){
+      if(c>0) adj[hid].push(row[c-1]);
+      if(c<row.length-1) adj[hid].push(row[c+1]);
+      [r-1,r+1].forEach(function(r2){
+        if(r2<0||r2>=layout.length) return;
+        var o=layout[r2];
+        if(row.length>o.length){
+          if(c>0&&c-1<o.length) adj[hid].push(o[c-1]);
+          if(c<o.length) adj[hid].push(o[c]);
+        } else {
+          if(c<o.length) adj[hid].push(o[c]);
+          if(c+1<o.length) adj[hid].push(o[c+1]);
+        }
+      });
+      adj[hid]=adj[hid].filter(function(v,i,a){return a.indexOf(v)===i;});
+    });
+  });
+  return {all:all, adj:adj};
+}
+
+// ── SETTINGS UI ──────────────────────────────────────────────────────────────
+function buildSettingsUI() {
+  var grid = document.getElementById('rules-grid');
+  grid.innerHTML = '';
+  RULE_DEFS.forEach(function(rule) {
+    var wrap = document.createElement('div');
+    wrap.dataset.ruleid = rule.id;
+    // hide mode-specific rules
+    if (rule.only4 && MODE !== 4) wrap.style.display = 'none';
+    if (rule.only6 && MODE !== 6) wrap.style.display = 'none';
+
+    var div = document.createElement('div');
+    div.className = 'rule-toggle' + (active[rule.id]?' active':'');
+    div.dataset.id = rule.id;
+    div.innerHTML =
+      '<div class="tbox"><span class="tcheck">&#10003;</span></div>'+
+      '<div class="rtext">'+rule.label+'<small>'+rule.hint+'</small></div>';
+
+    div.addEventListener('click', function(){
+      active[rule.id] = !active[rule.id];
+      div.classList.toggle('active', active[rule.id]);
+
+    });
+
+    wrap.appendChild(div);
+
+
+    grid.appendChild(wrap);
+  });
+}
+
+// ── SHUFFLE ──────────────────────────────────────────────────────────────────
+function shuffle(a){
+  a=a.slice();
+  for(var i=a.length-1;i>0;i--){var j=0|Math.random()*(i+1);var t=a[i];a[i]=a[j];a[j]=t;}
+  return a;
+}
+
+// ── GENERATE ─────────────────────────────────────────────────────────────────
+function generate() {
+  var layout = LAYOUTS[MODE];
+  var g = buildAdj(layout);
+  var ALL = g.all, ADJ = g.adj;
+  var pool0 = POOLS[MODE];
+  var tokens0 = TOKENS[MODE];
+
+  // Step 1: resource placement
+  var tiles = null;
+  // For 1-4 player with desert_center: hex 9 is the center of the 3-4-5-4-3 board
+  var DESERT_CENTER_HEX = 9; // middle hex of the 5-hex middle row
+  var desertFixed = (MODE === 4 && active['desert_center']);
+
+  for (var attempt=0; attempt<600000; attempt++) {
+    var pool = shuffle(pool0);
+    var t = {};
+    if (desertFixed) {
+      // remove one desert from pool and fix it at center
+      var dIdx = pool.indexOf('desert');
+      pool.splice(dIdx, 1);
+      // assign remaining pool to all hexes except center
+      var otherHexes = ALL.filter(function(h){return h !== DESERT_CENTER_HEX;});
+      otherHexes.forEach(function(hid,i){t[hid]=pool[i];});
+      t[DESERT_CENTER_HEX] = 'desert';
+    } else {
+      ALL.forEach(function(hid,i){t[hid]=pool[i];});
+    }
+    if (!active['no_same_res']){tiles=t;break;}
+    var ok=true;
+    for (var hi=0;hi<ALL.length;hi++){
+      var hid=ALL[hi];
+      if(t[hid]==='desert') continue;
+      var nb=ADJ[hid];
+      for(var ni=0;ni<nb.length;ni++) if(t[nb[ni]]===t[hid]){ok=false;break;}
+      if(!ok) break;
+    }
+    if(ok){tiles=t;break;}
+  }
+  if(!tiles) return null;
+
+  // Step 2: number placement (backtracking)
+  var land = ALL.filter(function(hid){return tiles[hid]!=='desert';});
+  land.sort(function(a,b){
+    return ADJ[b].filter(function(n){return tiles[n]!=='desert';}).length
+          -ADJ[a].filter(function(n){return tiles[n]!=='desert';}).length;
+  });
+
+  var pool2={};
+  tokens0.forEach(function(tk){pool2[tk]=(pool2[tk]||0)+1;});
+
+  var nums={};
+  // per-resource tracking
+  var resNeedsGood={},resNeedsBad={},resCounts={},resAssigned={};
+  // for new 1-4 rules: track which nums each resource already has
+  var resHasGood={},resHasBad={},resHas6={},resHas8={},resHas2={},resHas12={};
+  RESOURCES.forEach(function(r){
+    resNeedsGood[r]=true; resNeedsBad[r]=true;
+    resCounts[r]=land.filter(function(h){return tiles[h]===r;}).length;
+    resAssigned[r]=0;
+    resHasGood[r]=false; resHasBad[r]=false;
+    resHas6[r]=false; resHas8[r]=false;
+  });
+
+  var MAX_BT=300000, btCount=0;
+
+  function bt(i){
+    btCount++;
+    if(btCount>MAX_BT) return false;
+    if(i===land.length){
+      if(active['each_res_good']){for(var ri=0;ri<RESOURCES.length;ri++) if(!resHasGood[RESOURCES[ri]]) return false;}
+      // good_gets_bad: resource with 6 or 8 must have exactly one of {2,12}, not both
+      if(active['good_gets_bad']){
+        for(var ri=0;ri<RESOURCES.length;ri++){
+          var r=RESOURCES[ri];
+          if(resHasGood[r] && !resHasBad[r]) return false;        // must have at least one bad
+          if(resHasGood[r] && resHas2[r] && resHas12[r]) return false; // must not have both bad
+        }
+      }
+      return true;
+    }
+    var hid=land[i], res=tiles[hid];
+    var remaining=resCounts[res]-resAssigned[res];
+    var nbNums={};
+    ADJ[hid].forEach(function(nb){if(nums[nb]) nbNums[nums[nb]]=1;});
+
+    var cands=[];
+    for(var n in pool2){
+      n=+n; if(pool2[n]<=0) continue;
+      if(active['no_adj_same'] && nbNums[n]) continue;
+      if(active['no_adj_good'] && GOOD[n] && (nbNums[6]||nbNums[8])) continue;
+      if(active['no_adj_bad']  && BAD[n]  && (nbNums[2]||nbNums[12])) continue;
+      if(active['no_dup_on_res']){
+        var dup=false;
+        for(var j=0;j<i;j++) if(nums[land[j]]===n&&tiles[land[j]]===res){dup=true;break;}
+        if(dup) continue;
+      }
+      // no_double_good: if resource already has a 6, reject 8 and vice versa
+      if(active['no_double_good']){
+        if(n===6 && resHas8[res]) continue;
+        if(n===8 && resHas6[res]) continue;
+      }
+      // good_gets_bad forward-checks:
+      if(active['good_gets_bad']){
+        // (a) Resource gets a good but has no bad yet and this is the last tile -> block good
+        if(GOOD[n] && !resHasBad[res] && remaining===1) continue;
+        // (b) Resource already has both 2 and 12 -> block adding another bad
+        if(BAD[n] && resHas2[res] && resHas12[res]) continue;
+        // (c) Resource has no good yet but gets a bad -> that bad would be "unpaired"
+        //     only block if this is the last tile and no good will follow
+        // (allow it, the final check will catch violations)
+        // (d) Resource already has a bad AND a good AND gets another bad -> block (no both bads)
+        if(BAD[n] && resHasGood[res] && resHasBad[res]) continue;
+      }
+      cands.push(n);
+    }
+
+    // Pruning hints for last tile of a resource
+    if(remaining===1){
+      if(active['each_res_good'] && !resHasGood[res]){var gc=cands.filter(function(n){return GOOD[n];});if(gc.length) cands=gc;}
+      // good_gets_bad: if resource has a good but no bad yet on last tile, force bad
+      if(active['good_gets_bad'] && resHasGood[res] && !resHasBad[res]){
+        var bbc=cands.filter(function(n){return BAD[n];});if(bbc.length) cands=bbc;
+      }
+      // good_gets_bad: if resource has good+bad already, block all bads (no second bad)
+      if(active['good_gets_bad'] && resHasGood[res] && resHasBad[res]){
+        cands=cands.filter(function(n){return !BAD[n];});
+      }
+    }
+    cands=shuffle(cands);
+
+    for(var ci=0;ci<cands.length;ci++){
+      var n=cands[ci];
+      nums[hid]=n; pool2[n]--;resAssigned[res]++;
+      var wng=resNeedsGood[res], wnb=resNeedsBad[res];
+      var whg=resHasGood[res], whb=resHasBad[res];
+      var wh6=resHas6[res], wh8=resHas8[res];
+      var wh2=resHas2[res], wh12=resHas12[res];
+      if(GOOD[n]){ resNeedsGood[res]=false; resHasGood[res]=true; }
+      if(BAD[n]) { resNeedsBad[res]=false;  resHasBad[res]=true;  }
+      if(n===6)  resHas6[res]=true;
+      if(n===8)  resHas8[res]=true;
+      if(n===2)  resHas2[res]=true;
+      if(n===12) resHas12[res]=true;
+      if(bt(i+1)) return true;
+      delete nums[hid]; pool2[n]++;resAssigned[res]--;
+      resNeedsGood[res]=wng; resNeedsBad[res]=wnb;
+      resHasGood[res]=whg;   resHasBad[res]=whb;
+      resHas6[res]=wh6;      resHas8[res]=wh8;
+      resHas2[res]=wh2;      resHas12[res]=wh12;
+    }
+    return false;
+  }
+
+  for(var s=0;s<40;s++){
+    btCount=0; nums={};
+    RESOURCES.forEach(function(r){
+      resNeedsGood[r]=true; resNeedsBad[r]=true; resAssigned[r]=0;
+      resHasGood[r]=false; resHasBad[r]=false; resHas6[r]=false; resHas8[r]=false;
+      resHas2[r]=false; resHas12[r]=false;
+    resHas2[r]=false; resHas12[r]=false;
+    });
+    pool2={};tokens0.forEach(function(tk){pool2[tk]=(pool2[tk]||0)+1;});
+    land=shuffle(land);
+    if(bt(0)){
+      var result={};
+      ALL.forEach(function(hid){result[hid]=nums[hid]||null;});
+      return {tiles:tiles,nums:result};
+    }
+  }
+  return null;
+}
+
+// ── HARBOR PLACEMENT ─────────────────────────────────────────────────────────
+function assignHarbors(board) {
+  var ring      = MODE === 4 ? SEA_RING_4       : SEA_RING_6;
+  var hIdxs     = MODE === 4 ? HARBOR_INDICES_4  : HARBOR_INDICES_6;
+  var types     = shuffle(HARBOR_TYPES[MODE].slice());
+  var result    = [];
+  hIdxs.forEach(function(ringIdx, i) {
+    result.push({ hex: ring[ringIdx].hex, edge: ring[ringIdx].edge, type: types[i] });
+  });
+  return result;
+}
+
+// ── SVG UTILS ────────────────────────────────────────────────────────────────
+function svgEl(tag,attrs,txt){
+  var e=document.createElementNS('http://www.w3.org/2000/svg',tag);
+  if(attrs) for(var k in attrs) e.setAttribute(k,attrs[k]);
+  if(txt!==undefined) e.textContent=txt;
+  return e;
+}
+
+function hexCenter(layout, id, S, offX, offY) {
+  offX = offX || 0; offY = offY || 0;
+  var maxLen=0;
+  for(var r=0;r<layout.length;r++) if(layout[r].length>maxLen) maxLen=layout[r].length;
+  var HH=Math.sqrt(3)*S;
+  for(var r=0;r<layout.length;r++){
+    var row=layout[r];
+    var xOff=(maxLen-row.length)*S*0.882+10;
+    for(var c=0;c<row.length;c++){
+      if(row[c]===id){
+        return {
+          cx: xOff+c*S*1.764+S+offX,
+          cy: r*HH*0.866+HH*0.5+8+offY
+        };
+      }
+    }
+  }
+  return {cx:offX,cy:offY};
+}
+
+function edgeMidAndNormal(cx, cy, S, edge) {
+  var pts=[];
+  for(var i=0;i<6;i++){
+    var a=Math.PI/180*(60*i-30);
+    pts.push([cx+S*Math.cos(a), cy+S*Math.sin(a)]);
+  }
+  var v1=pts[edge], v2=pts[(edge+1)%6];
+  var mx=(v1[0]+v2[0])/2, my=(v1[1]+v2[1])/2;
+  var nx=mx-cx, ny=my-cy;
+  var len=Math.sqrt(nx*nx+ny*ny);
+  return {mx:mx,my:my,nx:nx/len,ny:ny/len,v1:v1,v2:v2};
+}
+
+// ── DRAW ─────────────────────────────────────────────────────────────────────
+function draw(board) {
+  var svg=document.getElementById('brd');
+  svg.innerHTML='';
+  if(!board) return;
+
+  var layout=LAYOUTS[MODE];
+  var maxLen=0;
+  for(var i=0;i<layout.length;i++) if(layout[i].length>maxLen) maxLen=layout[i].length;
+  var vw=Math.min((document.getElementById('board-wrap').offsetWidth||600)-32,820);
+
+  var harborFactor = active['show_harbors'] ? 0.68 : 1.0;
+  var S = Math.max(26, Math.floor(vw * harborFactor / (maxLen*2+1)));
+  var HH = Math.sqrt(3) * S;
+
+  var seaPad = active['show_harbors'] ? Math.ceil(S * Math.sqrt(3)) * 2 : 0;
+  var W = maxLen*S*1.764 + S + 20 + seaPad;
+  var H = layout.length*HH*0.866 + HH + 16 + seaPad;
+  var offX = active['show_harbors'] ? Math.ceil(S * Math.sqrt(3)) : 0;
+  var offY = active['show_harbors'] ? Math.ceil(S * Math.sqrt(3)) : 0;
+
+  svg.setAttribute('width', W);
+  svg.setAttribute('height', H);
+  svg.setAttribute('viewBox', '0 0 '+W+' '+H);
+
+  // ── SVG defs: gradients + patterns for each resource ──
+  var defs = svgEl('defs', {});
+
+  // Radial gradient helper
+  function mkRad(id, c1, c2, cx, cy) {
+    var g = svgEl('radialGradient', {id:id, cx:cx||'40%', cy:cy||'35%', r:'65%'});
+    var s1 = svgEl('stop', {'offset':'0%', 'stop-color':c1});
+    var s2 = svgEl('stop', {'offset':'100%', 'stop-color':c2});
+    g.appendChild(s1); g.appendChild(s2); defs.appendChild(g);
+  }
+  // Linear gradient helper
+  function mkLin(id, c1, c2, x1, y1, x2, y2) {
+    var g = svgEl('linearGradient', {id:id, x1:x1||'0%', y1:y1||'0%', x2:x2||'100%', y2:y2||'100%'});
+    var s1 = svgEl('stop', {'offset':'0%',   'stop-color':c1});
+    var s2 = svgEl('stop', {'offset':'100%', 'stop-color':c2});
+    g.appendChild(s1); g.appendChild(s2); defs.appendChild(g);
+  }
+
+  mkRad('fill-wood',   '#5a9e30', '#1e5c0e', '40%', '30%');
+  mkRad('fill-wheat',  '#e8c040', '#b07808', '40%', '30%');
+  mkRad('fill-sheep',  '#88c848', '#3a8020', '50%', '35%');
+  mkRad('fill-ore',    '#9898b0', '#404058', '50%', '30%');
+  mkRad('fill-brick',  '#c86018', '#7a2808', '40%', '30%');
+  mkRad('fill-desert', '#d8b060', '#a07830', '50%', '35%');
+  mkLin('fill-sea',    '#a8d8f0', '#6aabdc', '20%', '10%', '80%', '90%');
+  mkLin('fill-sea-harbor', '#7090c0', '#3a5888', '0%', '0%', '100%', '100%');
+
+  // Chip gradients
+  mkRad('chip-normal', '#f8f0d8', '#d8c890', '40%', '30%');
+  mkRad('chip-hot',    '#fff8c0', '#f0c840', '40%', '30%');
+
+  svg.appendChild(defs);
+
+  // ── Flat-top hex vertex function ──
+  // Flat-top: vertex k at angle = 60*k degrees
+  function hexPts(cx, cy, r) {
+    var pts = [];
+    for (var k=0; k<6; k++) {
+      var a = Math.PI/180 * (60*k - 30);
+      pts.push([(cx + r*Math.cos(a)).toFixed(1), (cy + r*Math.sin(a)).toFixed(1)]);
+    }
+    return pts;
+  }
+  function ptsStr(pts) { return pts.map(function(p){return p[0]+','+p[1];}).join(' '); }
+
+  // ── Draw sea ring ──
+  if (active['show_harbors']) {
+    var harborList = assignHarbors(board);
+    var harborLookup = {};
+    harborList.forEach(function(h){ harborLookup[h.hex+':'+h.edge] = h.type; });
+
+    var ring = MODE===4 ? SEA_RING_4 : SEA_RING_6;
+    ring.forEach(function(slot) {
+      var landPos = hexCenter(layout, slot.hex, S, offX, offY);
+      // Pointy-top: outward direction of edge e = 60*e degrees
+      var angle = Math.PI/180 * (60*slot.edge);
+      var dist  = S * Math.sqrt(3);
+      var scx   = landPos.cx + dist * Math.cos(angle);
+      var scy   = landPos.cy + dist * Math.sin(angle);
+
+      var htype    = harborLookup[slot.hex+':'+slot.edge] || null;
+      var isHarbor = htype !== null;
+      var pts = hexPts(scx, scy, S-1.5);
+
+      // Sea wave lines (subtle)
+      svg.appendChild(svgEl('polygon', {points:ptsStr(pts), fill:'url(#fill-sea)',
+        stroke:'rgba(255,255,255,0.2)', 'stroke-width':'1'}));
+
+      // Wave decoration
+      var wfs = Math.max(7, Math.floor(S*0.18));
+      svg.appendChild(svgEl('text', {x:scx, y:scy+wfs*0.4, 'text-anchor':'middle',
+        'font-size':wfs, fill:'rgba(255,255,255,0.15)', 'font-family':'serif'}, '≋'));
+
+      if (isHarbor) {
+        // Darker tinted overlay for harbor hexes
+        svg.appendChild(svgEl('polygon', {points:ptsStr(pts),
+          fill:'url(#fill-sea-harbor)', 'fill-opacity':'0.6',
+          stroke:'rgba(220,200,120,0.5)', 'stroke-width':'1.5'}));
+
+        // Pier lines from land edge vertices to harbor center
+        var vland = hexPts(landPos.cx, landPos.cy, S);
+        var v1 = vland[slot.edge], v2 = vland[(slot.edge+1)%6];
+        [v1, v2].forEach(function(v) {
+          svg.appendChild(svgEl('line', {
+            x1:v[0], y1:v[1], x2:scx.toFixed(1), y2:scy.toFixed(1),
+            stroke:'rgba(220,190,80,0.6)', 'stroke-width':'2',
+            'stroke-dasharray':'5,3', 'stroke-linecap':'round'
+          }));
+        });
+
+        // Harbor circle with label
+        var hr2 = Math.max(10, Math.floor(S*0.3));
+        svg.appendChild(svgEl('circle', {cx:scx, cy:scy, r:hr2,
+          fill:'rgba(20,40,80,0.85)', stroke:'rgba(220,200,120,0.7)', 'stroke-width':'1.5'}));
+
+        var lbl1 = htype==='3:1' ? '3:1' : '2:1';
+        var lbl2 = htype==='3:1' ? '' : (RESINFO[htype] ? RESINFO[htype].label : htype);
+        var hfs = Math.max(6, Math.floor(hr2*0.55));
+        svg.appendChild(svgEl('text', {x:scx, y:scy + (lbl2?-hfs*0.3:hfs*0.35),
+          'text-anchor':'middle', 'font-size':hfs, 'font-weight':'700',
+          fill:'#f0e0a0', 'font-family':'Cinzel,serif'}, lbl1));
+        if (lbl2) {
+          svg.appendChild(svgEl('text', {x:scx, y:scy + hfs*0.9,
+            'text-anchor':'middle', 'font-size':Math.floor(hfs*0.82), 'font-weight':'500',
+            fill:'#c8d8f0', 'font-family':'Crimson Text,Georgia,serif'}, lbl2));
+        }
+      }
+    });
+  }
+
+  // ── Draw land hexes ──
+  layout.forEach(function(row, ri) {
+    var xOff = (maxLen - row.length)*S*0.882 + 10 + offX;
+    row.forEach(function(id, ci) {
+      var cx  = xOff + ci*S*1.764 + S;
+      var cy  = ri*HH*0.866 + HH*0.5 + 8 + offY;
+      var res = board.tiles[id];
+      var num = board.nums[id];
+      var col = RESINFO[res];
+      var pts  = hexPts(cx, cy, S-1.5);
+      var ipts = hexPts(cx, cy, S*0.62);
+
+      // Drop shadow
+      var spts = pts.map(function(p){return [(+p[0]+2).toFixed(1),(+p[1]+3).toFixed(1)];});
+      svg.appendChild(svgEl('polygon', {points:ptsStr(spts), fill:'rgba(0,0,0,0.22)'}));
+
+      // Main hex with gradient fill
+      svg.appendChild(svgEl('polygon', {points:ptsStr(pts),
+        fill:'url(#fill-'+res+')',
+        stroke:'rgba(0,0,0,0.35)', 'stroke-width':'1.8'}));
+
+      // Inner highlight ring (lighter centre)
+      svg.appendChild(svgEl('polygon', {points:ptsStr(ipts),
+        fill:'rgba(255,255,255,0.07)', stroke:'rgba(255,255,255,0.12)', 'stroke-width':'1'}));
+
+      // Texture detail lines (simulate terrain)
+      var tfs = Math.max(16, Math.floor(S*0.55));
+      var emoji = {wood:'🌲',wheat:'🌾',sheep:'🐑',ore:'⛰',brick:'🏗',desert:'🌵'}[res] || '';
+      svg.appendChild(svgEl('text', {x:cx, y:cy + tfs*0.38,
+        'text-anchor':'middle', 'font-size':tfs, fill:'rgba(255,255,255,0.28)',
+        'font-family':'serif'}, emoji));
+
+      // Desert center marker
+      if (MODE===4 && active['desert_center'] && id===9) {
+        svg.appendChild(svgEl('polygon', {points:ptsStr(pts),
+          fill:'none', stroke:'rgba(220,170,40,0.75)',
+          'stroke-width':'3', 'stroke-dasharray':'6,3'}));
+      }
+
+      // Resource label
+      var fs = Math.max(7, Math.floor(S*0.17));
+      var lblY = num ? cy - S*0.28 : cy + fs*0.4;
+      var txtShadow = svgEl('text', {x:cx+0.8, y:lblY+0.8, 'text-anchor':'middle',
+        'font-size':fs, 'font-weight':'700', fill:'rgba(0,0,0,0.5)',
+        'font-family':'Cinzel,Georgia,serif'});
+      txtShadow.textContent = col.label;
+      svg.appendChild(txtShadow);
+      var txt = svgEl('text', {x:cx, y:lblY, 'text-anchor':'middle',
+        'font-size':fs, 'font-weight':'700', fill:'rgba(255,255,255,0.95)',
+        'font-family':'Cinzel,Georgia,serif'});
+      txt.textContent = col.label;
+      svg.appendChild(txt);
+
+      // Number chip
+      if (num) {
+        var hot  = (num===6||num===8);
+        var cold = (num===2||num===12);
+        var r2   = Math.max(12, Math.floor(S*0.30));
+        var cy2  = cy + S*0.16;
+
+        // Chip shadow
+        svg.appendChild(svgEl('circle', {cx:cx+1.5, cy:cy2+2, r:r2,
+          fill:'rgba(0,0,0,0.25)'}));
+        // Chip body
+        svg.appendChild(svgEl('circle', {cx:cx, cy:cy2, r:r2,
+          fill: hot ? 'url(#chip-hot)' : 'url(#chip-normal)',
+          stroke: hot ? '#c07000' : '#a08840',
+          'stroke-width': hot ? '2.2' : '1.8'}));
+        // Chip inner ring
+        svg.appendChild(svgEl('circle', {cx:cx, cy:cy2, r:r2*0.82,
+          fill:'none', stroke:'rgba(0,0,0,0.12)', 'stroke-width':'1'}));
+
+        // Number text
+        var nfs = Math.floor(r2 * (hot ? 1.1 : 0.92));
+        var ntxt = svgEl('text', {x:cx, y:cy2 + nfs*0.38,
+          'text-anchor':'middle', 'font-size':nfs, 'font-weight':'800',
+          fill: hot ? '#c00000' : cold ? '#707070' : '#1a1000',
+          'font-family':'Cinzel,Georgia,serif'});
+        ntxt.textContent = num;
+        svg.appendChild(ntxt);
+
+        // Probability dots
+        var d  = DOTS[num]||0;
+        var dy = cy2 + r2 + 5;
+        var dotR = Math.max(1.5, S*0.035);
+        var dotGap = dotR*2.4;
+        for (var di=0; di<d; di++) {
+          svg.appendChild(svgEl('circle', {
+            cx: (cx - (d-1)*dotGap/2 + di*dotGap).toFixed(1),
+            cy: dy, r: dotR.toFixed(1),
+            fill: hot ? '#cc0000' : '#5a3808'
+          }));
+        }
+      }
+    });
+  });
+
+
+  // ── Legend ──
+  var leg = document.getElementById('legend');
+  leg.innerHTML = '';
+  var cnt = {};
+  for (var id in board.tiles) cnt[board.tiles[id]] = (cnt[board.tiles[id]]||0)+1;
+  ['wood','brick','wheat','sheep','ore','desert'].forEach(function(r) {
+    if (!cnt[r]) return;
+    var m = RESINFO[r];
+    var div = document.createElement('div');
+    div.className = 'leg';
+    div.innerHTML = '<div class="ld" style="background:url(#fill-'+r+');background-color:'+m.color+'"></div><span>'+m.label+': '+cnt[r]+'</span>';
+    leg.appendChild(div);
+  });
+  if (active['show_harbors']) {
+    var harbors2 = assignHarbors(board);
+    var hcnt = {};
+    harbors2.forEach(function(h){ hcnt[h.type]=(hcnt[h.type]||0)+1; });
+    for (var type in hcnt) {
+      var div = document.createElement('div');
+      div.className = 'leg';
+      div.innerHTML = '<div class="ld" style="background:'+HARBOR_COLORS[type]+';border:1px solid rgba(255,255,255,0.2)"></div><span>'+HARBOR_LABELS[type]+': '+hcnt[type]+'</span>';
+      leg.appendChild(div);
+    }
+  }
+}
+
+
+// ── MODE SWITCH ───────────────────────────────────────────────────────────────
+
+function setMode(m) {
+  if (MODE === m) return;
+  MODE = m;
+  // Cancel any running generation
+  generationCancelled = true;
+
+  document.getElementById('btn-4').classList.toggle('active', m===4);
+  document.getElementById('btn-6').classList.toggle('active', m===6);
+
+  // Show/hide mode-specific rules
+  var grid = document.getElementById('rules-grid');
+  grid.querySelectorAll('[data-ruleid]').forEach(function(wrap){
+    var rid = wrap.dataset.ruleid;
+    var rule = RULE_DEFS.filter(function(r){return r.id===rid;})[0];
+    if (rule && rule.only4) {
+      wrap.style.display = (m===4) ? '' : 'none';
+      if (m!==4) active[rid] = false;
+    }
+    if (rule && rule.only6) {
+      wrap.style.display = (m===6) ? '' : 'none';
+      if (m!==6) active[rid] = false;
+    }
+  });
+
+  // Reset board – do NOT auto-start; wait for user to press the button
+  lastBoard = null;
+  document.getElementById('brd').innerHTML = '';
+  document.getElementById('legend').innerHTML = '';
+  document.getElementById('status').className = 'status';
+  document.getElementById('status').textContent = 'Modus gewechselt – bitte „Neues Spielfeld“ drücken.';
+  document.getElementById('gen-btn').disabled = false;
+  document.getElementById('gen-btn').innerHTML = '&#9881; Neues Spielfeld';
+}
+
+// ── LOCATION PICKER ─────────────────────────────────────────────────────────────
+function chooseLocation(name) {
+  name = (name || '').trim();
+  if (!name) return;
+  document.getElementById('main-title').innerHTML =
+    'Siedler von ' + name + '<span>Spielfeldgenerator</span>';
+  document.title = 'Siedler von ' + name;
+  document.getElementById('location-overlay').style.display = 'none';
+}
+
+function confirmCustomLocation() {
+  var val = document.getElementById('loc-custom').value.trim();
+  if (!val) { document.getElementById('loc-custom').focus(); return; }
+  chooseLocation(val);
+}
+
+// ── MAIN ────────────────────────────────────────────────────────────────────────────────
+buildSettingsUI();
+
+var lastBoard = null;
+var generationCancelled = false;
+
+// How many attempts before auto-disabling good_gets_bad
+var GOOD_GETS_BAD_FALLBACK_AFTER = 15;
+
+function disableRuleInUI(ruleId) {
+  active[ruleId] = false;
+  var grid = document.getElementById('rules-grid');
+  var wrap = grid.querySelector('[data-ruleid="' + ruleId + '"]');
+  if (!wrap) return;
+  var toggle = wrap.querySelector('.rule-toggle');
+  if (toggle) {
+    toggle.classList.remove('active');
+    toggle.classList.add('rule-auto-disabled');
+    setTimeout(function(){ toggle.classList.remove('rule-auto-disabled'); }, 2500);
+  }
+}
+
+function doGenerateWithRetry(isInitial) {
+  // Mark any previous run as cancelled
+  generationCancelled = true;
+  generationCancelled = false;
+
+  var btn = document.getElementById('gen-btn');
+  var st  = document.getElementById('status');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Generiere...';
+  st.className = 'status';
+  st.textContent = 'Suche Konfiguration…';
+
+  var t0 = Date.now();
+  var attempt = 0;
+  var goodGetsBadDropped = false;
+
+  var MAX_ATTEMPTS = 5;
+
+  function tryOnce() {
+    if (generationCancelled) return;
+
+    attempt++;
+    st.textContent = 'Versuch ' + attempt + ' von ' + MAX_ATTEMPTS + ' …';
+
+    // After GOOD_GETS_BAD_FALLBACK_AFTER attempts, quietly drop good_gets_bad if still active
+    if (!goodGetsBadDropped && active['good_gets_bad'] && attempt > GOOD_GETS_BAD_FALLBACK_AFTER) {
+      goodGetsBadDropped = true;
+      disableRuleInUI('good_gets_bad');
+      st.textContent = 'Option „6/8 mit 2/12“ wird übersprungen – Versuch ' + attempt + ' …';
+    }
+
+    var board = generate();
+
+    if (generationCancelled) return;
+
+    if (board) {
+      var dt = Date.now() - t0;
+      lastBoard = board;
+      draw(board);
+      btn.disabled = false;
+      btn.innerHTML = '&#9881; Neues Spielfeld';
+      if (goodGetsBadDropped) {
+        st.className = 'status ok';
+        st.innerHTML = '&#10003; Gefunden nach ' + attempt +
+          (attempt === 1 ? ' Versuch' : ' Versuchen') + ' (' + dt + ' ms)' +
+          ' &nbsp;<span style="color:#d4952a;font-style:normal;">&#9888; Option „6/8 mit 2/12“ wurde deaktiviert</span>';
+      } else {
+        st.className = 'status ok';
+        st.textContent = '✓ Gefunden nach ' + attempt +
+          (attempt === 1 ? ' Versuch' : ' Versuchen') + ' (' + dt + ' ms)';
+      }
+    } else if (attempt >= MAX_ATTEMPTS) {
+      // Give up – ask user to adjust settings
+      btn.disabled = false;
+      btn.innerHTML = '&#9881; Neues Spielfeld';
+      st.className = 'status fail';
+      st.innerHTML = '&#10007; Kein Ergebnis nach ' + MAX_ATTEMPTS + ' Versuchen &ndash; bitte Bedingungen anpassen.';
+    } else {
+      setTimeout(tryOnce, 0);
+    }
+  }
+
+  setTimeout(tryOnce, 30);
+}
+
+document.getElementById('gen-btn').addEventListener('click', function() {
+  doGenerateWithRetry(false);
+});
+
+// Initial load
+doGenerateWithRetry(true);
+</script>
+</body>
+</html>
