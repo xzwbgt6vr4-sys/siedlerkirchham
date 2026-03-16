@@ -3,12 +3,6 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<link rel="manifest" href="manifest.json">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Siedler von Kirchham">
-<link rel="apple-touch-icon" href="icon-192.png">
-
 <title>Siedler von Kirchham</title>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;800&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
 <style>
@@ -41,6 +35,7 @@ header{
   text-align:center;
   padding:26px 16px 16px;
   position:relative;
+  z-index:200;
 }
 header::after{
   content:'';display:block;height:1px;
@@ -281,6 +276,108 @@ svg{display:block;margin:0 auto;}
 }
 .loc-confirm:hover{opacity:0.85;}
 
+/* BURGER MENU */
+#burger-wrap{
+  position:absolute;
+  left:16px;
+  top:50%;
+  transform:translateY(-50%);
+  z-index:300;
+}
+#burger-btn{
+  display:flex;flex-direction:column;justify-content:center;align-items:center;
+  gap:5px;width:36px;height:36px;
+  background:none;border:1.5px solid var(--border);border-radius:8px;
+  cursor:pointer;transition:all 0.18s;padding:6px;
+}
+#burger-btn:hover{border-color:var(--gold);background:rgba(180,140,50,0.08);}
+#burger-btn span{
+  display:block;width:18px;height:2px;
+  background:var(--dim);border-radius:2px;transition:background 0.18s;
+}
+#burger-btn:hover span{background:var(--gold);}
+
+#burger-menu{
+  display:none;
+  position:absolute;
+  top:calc(100% + 8px);
+  left:0;
+  min-width:200px;
+  background:var(--bg2);
+  border:1px solid var(--border);
+  border-radius:12px;
+  box-shadow:0 8px 32px rgba(0,0,0,0.5);
+  z-index:1000;
+  overflow:hidden;
+}
+#burger-menu.open{display:block;}
+.menu-item{
+  display:block;width:100%;padding:12px 18px;
+  font-family:'Cinzel',serif;font-size:13px;font-weight:600;
+  letter-spacing:0.05em;color:var(--dim);
+  background:none;border:none;text-align:left;cursor:pointer;
+  transition:all 0.15s;border-bottom:1px solid var(--border);
+}
+.menu-item:last-child{border-bottom:none;}
+.menu-item:hover{background:rgba(180,140,50,0.1);color:var(--gold-lt);}
+
+/* MODAL PANEL */
+.modal-tabs{display:flex;gap:4px;margin-bottom:16px;border-bottom:1px solid var(--border);padding-bottom:0;}
+.modal-tab{
+  padding:7px 14px;font-family:'Cinzel',serif;font-size:11px;font-weight:600;
+  letter-spacing:0.06em;cursor:pointer;border:none;background:none;
+  color:var(--dim);border-bottom:2px solid transparent;margin-bottom:-1px;
+  transition:all 0.15s;
+}
+.modal-tab.active{color:var(--gold-lt);border-bottom-color:var(--gold);}
+.modal-tab:hover{color:var(--text);}
+.tab-panel{display:none;}.tab-panel.active{display:block;}
+.rules-section{margin-bottom:16px;}
+.rules-section h3{
+  font-family:'Cinzel',serif;font-size:12px;color:var(--gold);
+  letter-spacing:0.07em;margin:14px 0 7px;text-transform:uppercase;
+}
+.rules-section ul{padding-left:16px;list-style:disc;}
+.rules-section li{margin-bottom:5px;font-size:13.5px;line-height:1.55;color:var(--text);}
+.rules-section p{font-size:13.5px;line-height:1.6;color:var(--text);margin-bottom:8px;}
+.rule-chip{
+  display:inline-block;padding:2px 8px;border-radius:5px;font-size:11px;
+  font-family:'Cinzel',serif;font-weight:600;letter-spacing:0.04em;margin-left:4px;
+}
+.chip-on {background:rgba(60,140,60,0.2);color:#80d880;border:1px solid rgba(80,160,80,0.35);}
+.chip-off{background:rgba(100,100,100,0.15);color:var(--dim);border:1px solid var(--border);}
+
+.modal-overlay{
+  display:none;position:fixed;inset:0;
+  background:rgba(5,12,24,0.88);
+  z-index:600;align-items:center;justify-content:center;padding:20px;
+}
+.modal-overlay.open{display:flex;}
+.modal-card{
+  background:var(--bg2);border:1px solid var(--border);border-radius:16px;
+  padding:28px 26px;max-width:500px;width:100%;
+  max-height:80vh;overflow-y:auto;
+  position:relative;
+}
+.modal-title{
+  font-family:'Cinzel',serif;font-size:16px;font-weight:700;
+  color:var(--gold-lt);letter-spacing:0.08em;margin-bottom:16px;
+}
+.modal-close{
+  position:absolute;top:14px;right:16px;
+  background:none;border:none;cursor:pointer;
+  color:var(--dim);font-size:20px;line-height:1;transition:color 0.15s;
+}
+.modal-close:hover{color:var(--text);}
+.modal-body{font-size:14px;line-height:1.7;color:var(--text);}
+.modal-body p{margin-bottom:10px;}
+.modal-body h3{
+  font-family:'Cinzel',serif;font-size:13px;color:var(--gold);
+  margin:14px 0 6px;letter-spacing:0.06em;
+}
+.modal-body ul{padding-left:18px;}
+.modal-body li{margin-bottom:5px;}
+
 @media print{
   body{background:white;color:#222;}
   header{background:none;}
@@ -312,8 +409,49 @@ svg{display:block;margin:0 auto;}
 </div>
 
 <header>
+  <div id="burger-wrap">
+    <button id="burger-btn" onclick="toggleMenu()" aria-label="Menü">
+      <span></span><span></span><span></span>
+    </button>
+    <div id="burger-menu">
+      <button class="menu-item" onclick="openLocationOverlay()">&#9741; Spielort ändern</button>
+      <button class="menu-item" onclick="openModal('rules-modal')">&#9654; Regeln</button>
+      <button class="menu-item" onclick="openModal('about-modal')">&#9432; Über</button>
+    </div>
+  </div>
   <h1 id="main-title">Siedler von Kirchham<span>Spielfeldgenerator</span></h1>
 </header>
+
+<!-- Rules modal -->
+<div class="modal-overlay" id="rules-modal">
+  <div class="modal-card">
+    <button class="modal-close" onclick="closeModal('rules-modal')">&#10005;</button>
+    <div class="modal-title">Regeln</div>
+    <div id="rules-modal-body"></div>
+  </div>
+</div>
+
+<!-- About modal -->
+<div class="modal-overlay" id="about-modal">
+  <div class="modal-card">
+    <button class="modal-close" onclick="closeModal('about-modal')">&#10005;</button>
+    <div class="modal-title">Über diese App</div>
+    <div class="modal-body">
+      <p>Dieser Generator erstellt zufällige, regelkonforme Spielfelder für <strong>Die Siedler von Catan</strong> – angepasst für den jeweiligen Spielort.</p>
+      <p>Alle Bedingungen – von der Rohstoffverteilung bis zur Zahlenplatzierung – können frei konfiguriert werden. Der Algorithmus sucht solange, bis eine gültige Konfiguration gefunden wird.</p>
+      <h3>Varianten</h3>
+      <ul>
+        <li><strong>1–4 Spieler:</strong> 19 Felder, 9 Häfen</li>
+        <li><strong>5–6 Spieler:</strong> 30 Felder, 11 Häfen</li>
+      </ul>
+      <h3>Technik</h3>
+      <p>Die App läuft vollständig im Browser – kein Server, keine Daten werden übertragen. Funktioniert offline auf iPad, iPhone und Desktop.</p>
+      <h3>Ersteller</h3>
+      <p><strong>Wolfgang Bauer</strong>, Kirchham</p>
+      <p style="color:var(--dim);font-size:13px;">Version Beta 0.5.1 &nbsp;&middot;&nbsp; 16.03.2026</p>
+    </div>
+  </div>
+</div>
 
 <div class="app">
 
@@ -378,7 +516,7 @@ var SEA_RING_4 = [
   {hex:0,edge:3},{hex:0,edge:4},
   {hex:0,edge:5},{hex:1,edge:4}
 ];
-var HARBOR_INDICES_4 = [0,2,4,6,8,10,12,14,16];
+var HARBOR_INDICES_4 = [2,4,6,8,12,14,16,18,21];
 
 // 5-6 player: 26 outer sea hexes, 11 harbors at even indices [0,2,4,6,8,10,12,14,16,18,20]
 var SEA_RING_6 = [
@@ -396,7 +534,7 @@ var SEA_RING_6 = [
   {hex:0,edge:3},{hex:0,edge:4},
   {hex:0,edge:5},{hex:1,edge:4}
 ];
-var HARBOR_INDICES_6 = [0,2,4,6,8,10,12,14,16,18,20];
+var HARBOR_INDICES_6 = [2,4,6,8,10,14,16,18,20,22,25];
 
 // Harbor type pools per mode
 // 5-6: wood:1 brick:1 wheat:1 sheep:2 ore:1 = 6 specific + 3:1:5 = 11 total
@@ -435,7 +573,6 @@ var RULE_DEFS = [
   {id:'no_adj_bad',    label:'2 und 12 nie nebeneinander',            hint:'Keine zwei niedrigen Zahlen benachbart',      def:false},
   {id:'no_dup_on_res', label:'Keine gleiche Zahl auf einem Rohstoff', hint:'Jede Zahl pro Rohstoff nur einmal',           def:false},
   {id:'each_res_good', label:'Jeder Rohstoff mind. eine 6 oder 8',    hint:'Gleichmäßige gute Zahlen verteilt',          def:false,  only6:true},
-  {id:'good_gets_bad', label:'6/8 gepaart: genau eine 2 oder 12',    hint:'Rohstoff mit 6/8 bekommt auch genau eine 2 oder 12 – aber nicht beides', def:false, only4:true},
   {id:'no_double_good',label:'Kein Rohstoff mit 6 und 8 zusammen',    hint:'Kein Rohstoff bekommt sowohl 6 als auch 8',           def:false,  only4:true},
   {id:'desert_center', label:'Wüste in der Mitte',                    hint:'Wüste fest im Mittelfeld platzieren',        def:false, only4:true},
   {id:'no_adj_same',   label:'Gleiche Zahlen nie benachbart',         hint:'Extra-streng: kein Zahlenpaar nebeneinander',def:false},
@@ -565,7 +702,7 @@ function generate() {
   // per-resource tracking
   var resNeedsGood={},resNeedsBad={},resCounts={},resAssigned={};
   // for new 1-4 rules: track which nums each resource already has
-  var resHasGood={},resHasBad={},resHas6={},resHas8={},resHas2={},resHas12={};
+  var resHasGood={},resHasBad={},resHas6={},resHas8={};
   RESOURCES.forEach(function(r){
     resNeedsGood[r]=true; resNeedsBad[r]=true;
     resCounts[r]=land.filter(function(h){return tiles[h]===r;}).length;
@@ -581,14 +718,7 @@ function generate() {
     if(btCount>MAX_BT) return false;
     if(i===land.length){
       if(active['each_res_good']){for(var ri=0;ri<RESOURCES.length;ri++) if(!resHasGood[RESOURCES[ri]]) return false;}
-      // good_gets_bad: resource with 6 or 8 must have exactly one of {2,12}, not both
-      if(active['good_gets_bad']){
-        for(var ri=0;ri<RESOURCES.length;ri++){
-          var r=RESOURCES[ri];
-          if(resHasGood[r] && !resHasBad[r]) return false;        // must have at least one bad
-          if(resHasGood[r] && resHas2[r] && resHas12[r]) return false; // must not have both bad
-        }
-      }
+
       return true;
     }
     var hid=land[i], res=tiles[hid];
@@ -612,32 +742,15 @@ function generate() {
         if(n===6 && resHas8[res]) continue;
         if(n===8 && resHas6[res]) continue;
       }
-      // good_gets_bad forward-checks:
-      if(active['good_gets_bad']){
-        // (a) Resource gets a good but has no bad yet and this is the last tile -> block good
-        if(GOOD[n] && !resHasBad[res] && remaining===1) continue;
-        // (b) Resource already has both 2 and 12 -> block adding another bad
-        if(BAD[n] && resHas2[res] && resHas12[res]) continue;
-        // (c) Resource has no good yet but gets a bad -> that bad would be "unpaired"
-        //     only block if this is the last tile and no good will follow
-        // (allow it, the final check will catch violations)
-        // (d) Resource already has a bad AND a good AND gets another bad -> block (no both bads)
-        if(BAD[n] && resHasGood[res] && resHasBad[res]) continue;
-      }
+
       cands.push(n);
     }
 
     // Pruning hints for last tile of a resource
     if(remaining===1){
       if(active['each_res_good'] && !resHasGood[res]){var gc=cands.filter(function(n){return GOOD[n];});if(gc.length) cands=gc;}
-      // good_gets_bad: if resource has a good but no bad yet on last tile, force bad
-      if(active['good_gets_bad'] && resHasGood[res] && !resHasBad[res]){
-        var bbc=cands.filter(function(n){return BAD[n];});if(bbc.length) cands=bbc;
-      }
-      // good_gets_bad: if resource has good+bad already, block all bads (no second bad)
-      if(active['good_gets_bad'] && resHasGood[res] && resHasBad[res]){
-        cands=cands.filter(function(n){return !BAD[n];});
-      }
+
+
     }
     cands=shuffle(cands);
 
@@ -646,21 +759,14 @@ function generate() {
       nums[hid]=n; pool2[n]--;resAssigned[res]++;
       var wng=resNeedsGood[res], wnb=resNeedsBad[res];
       var whg=resHasGood[res], whb=resHasBad[res];
-      var wh6=resHas6[res], wh8=resHas8[res];
-      var wh2=resHas2[res], wh12=resHas12[res];
-      if(GOOD[n]){ resNeedsGood[res]=false; resHasGood[res]=true; }
+      var wh6=resHas6[res], wh8=resHas8[res];      if(GOOD[n]){ resNeedsGood[res]=false; resHasGood[res]=true; }
       if(BAD[n]) { resNeedsBad[res]=false;  resHasBad[res]=true;  }
       if(n===6)  resHas6[res]=true;
-      if(n===8)  resHas8[res]=true;
-      if(n===2)  resHas2[res]=true;
-      if(n===12) resHas12[res]=true;
-      if(bt(i+1)) return true;
+      if(n===8)  resHas8[res]=true;      if(bt(i+1)) return true;
       delete nums[hid]; pool2[n]++;resAssigned[res]--;
       resNeedsGood[res]=wng; resNeedsBad[res]=wnb;
       resHasGood[res]=whg;   resHasBad[res]=whb;
-      resHas6[res]=wh6;      resHas8[res]=wh8;
-      resHas2[res]=wh2;      resHas12[res]=wh12;
-    }
+      resHas6[res]=wh6;      resHas8[res]=wh8;    }
     return false;
   }
 
@@ -669,8 +775,6 @@ function generate() {
     RESOURCES.forEach(function(r){
       resNeedsGood[r]=true; resNeedsBad[r]=true; resAssigned[r]=0;
       resHasGood[r]=false; resHasBad[r]=false; resHas6[r]=false; resHas8[r]=false;
-      resHas2[r]=false; resHas12[r]=false;
-    resHas2[r]=false; resHas12[r]=false;
     });
     pool2={};tokens0.forEach(function(tk){pool2[tk]=(pool2[tk]||0)+1;});
     land=shuffle(land);
@@ -1032,6 +1136,89 @@ function setMode(m) {
   document.getElementById('gen-btn').innerHTML = '&#9881; Neues Spielfeld';
 }
 
+// ── BURGER MENU ─────────────────────────────────────────────────────────────
+function toggleMenu() {
+  var menu = document.getElementById('burger-menu');
+  menu.classList.toggle('open');
+}
+
+function openModal(id) {
+  document.getElementById('burger-menu').classList.remove('open');
+  if (id === 'rules-modal') buildRulesModalContent();
+  document.getElementById(id).classList.add('open');
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+
+function openLocationOverlay() {
+  document.getElementById('burger-menu').classList.remove('open');
+  document.getElementById('location-overlay').style.display = 'flex';
+}
+
+function buildRulesModalContent() {
+  var body = document.getElementById('rules-modal-body');
+  var h = '';
+  // Tabs
+  h += '<div class="modal-tabs">';
+  h += '<button class="modal-tab active" onclick="switchRuleTab(this,\'tab-orig\')">Original-Regeln</button>';
+  h += '<button class="modal-tab" onclick="switchRuleTab(this,\'tab-app\')">App-Optionen</button>';
+  h += '</div>';
+  // Tab 1: Original rules
+  h += '<div class="tab-panel active" id="tab-orig">';
+  h += '<div class="rules-section"><h3>Spielaufbau</h3><ul>';
+  h += '<li>Pl&#228;ttchen werden zuf&#228;llig angeordnet, Zahlenchips gem&#228;&#223; Buchstabenreihenfolge (A&#8211;R) im Uhrzeigersinn.</li>';
+  h += '<li>Die W&#252;ste erh&#228;lt keinen Chip und beherbergt den R&#228;uber.</li>';
+  h += '</ul></div>';
+  h += '<div class="rules-section"><h3>1&#8211;4 Spieler &#8211; Grundspiel</h3><ul>';
+  h += '<li><strong>Spielfeld:</strong> 19 Pl&#228;ttchen &#8211; Wald &#215;4, Weide &#215;4, Getreide &#215;4, Lehm &#215;3, Erz &#215;3, W&#252;ste &#215;1</li>';
+  h += '<li><strong>Zahlenchips:</strong> 2&#215;1, 3&#215;2, 4&#215;2, 5&#215;2, 6&#215;2, 8&#215;2, 9&#215;2, 10&#215;2, 11&#215;2, 12&#215;1</li>';
+  h += '<li><strong>H&#228;fen:</strong> 9 H&#228;fen &#8211; je 1&#215; Holz, Lehm, Getreide, Wolle, Erz (2:1) &amp; 4&#215; 3:1</li>';
+  h += '<li><strong>Produktion:</strong> W&#252;rfelergebnis = Rohstoffe f&#252;r Siedlungen/St&#228;dte auf dem Feld.</li>';
+  h += '<li><strong>R&#228;uber:</strong> Bei 7: kein Rohstoff; &gt;7 Karten = H&#228;lfte abgeben; R&#228;uber versetzen.</li>';
+  h += '<li><strong>Bauen:</strong> Stra&#223;e: 1 Holz+1 Lehm &nbsp;|&nbsp; Siedlung: 1 Holz+1 Lehm+1 Getreide+1 Wolle &nbsp;|&nbsp; Stadt: 2 Getreide+3 Erz &nbsp;|&nbsp; Entwicklungskarte: 1 Erz+1 Getreide+1 Wolle</li>';
+  h += '<li><strong>Sieg:</strong> 10 Siegpunkte (Siedlung=1, Stadt=2, L&#228;ngste Handelsstra&#223;e=2, Gr&#246;&#223;te Rittermacht=2)</li>';
+  h += '</ul></div>';
+  h += '<div class="rules-section"><h3>5&#8211;6 Spieler &#8211; Erweiterung</h3><ul>';
+  h += '<li><strong>Spielfeld:</strong> 30 Pl&#228;ttchen &#8211; Wald &#215;6, Weide &#215;6, Getreide &#215;6, Lehm &#215;5, Erz &#215;5, W&#252;ste &#215;2</li>';
+  h += '<li><strong>Zahlenchips:</strong> Erweiterter Satz mit je 3&#215; der h&#228;ufigen Zahlen (5, 6, 8, 9, 10)</li>';
+  h += '<li><strong>H&#228;fen:</strong> 11 H&#228;fen &#8211; je 1&#215; Holz, Lehm, Getreide, Erz (2:1), 2&#215; Wolle (2:1) &amp; 5&#215; 3:1</li>';
+  h += '<li><strong>Sonderzug:</strong> Nach dem letzten Spieler darf jeder noch nicht aktive Spieler eine Bau-Sonderaktion durchf&#252;hren (ohne W&#252;rfeln).</li>';
+  h += '<li><strong>Sieg:</strong> 10 Siegpunkte (manche Gruppen spielen auf 12 bei 5&#8211;6 Spielern).</li>';
+  h += '</ul></div>';
+  h += '<div class="rules-section"><h3>Handel</h3><ul>';
+  h += '<li><strong>Ohne Hafen:</strong> 4:1 (4 gleiche Rohstoffe f&#252;r 1 beliebigen)</li>';
+  h += '<li><strong>3:1-Hafen:</strong> 3 gleiche f&#252;r 1 beliebigen</li>';
+  h += '<li><strong>2:1-Hafen:</strong> 2 des Hafenrohstoffs f&#252;r 1 beliebigen</li>';
+  h += '<li><strong>Inlandhandel:</strong> Beliebige Tauschgesch&#228;fte mit Mitspielern &#8211; nur im eigenen Zug.</li>';
+  h += '</ul></div>';
+  h += '</div>'; // end tab-orig
+  // Tab 2: App options
+  h += '<div class="tab-panel" id="tab-app">';
+  h += '<div class="rules-section"><ul>';
+  RULE_DEFS.forEach(function(rule) {
+    if (rule.only4 && MODE !== 4) return;
+    if (rule.only6 && MODE !== 6) return;
+    var chip = active[rule.id]
+      ? '<span class="rule-chip chip-on">AN</span>'
+      : '<span class="rule-chip chip-off">AUS</span>';
+    h += '<li><strong>' + rule.label + '</strong>' + chip +
+      '<br><span style="font-size:12px;color:var(--dim);">' + rule.hint + '</span></li>';
+  });
+  h += '</ul></div></div>'; // end tab-app
+  body.innerHTML = h;
+}
+
+
+
+function switchRuleTab(btn, tabId) {
+  document.querySelectorAll('.modal-tab').forEach(function(b){ b.classList.remove('active'); });
+  document.querySelectorAll('.tab-panel').forEach(function(p){ p.classList.remove('active'); });
+  btn.classList.add('active');
+  document.getElementById(tabId).classList.add('active');
+}
+
 // ── LOCATION PICKER ─────────────────────────────────────────────────────────────
 function chooseLocation(name) {
   name = (name || '').trim();
@@ -1049,26 +1236,29 @@ function confirmCustomLocation() {
 }
 
 // ── MAIN ────────────────────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', function() {
+
+// Close menu when clicking outside
+document.addEventListener('click', function(e) {
+  var wrap = document.getElementById('burger-wrap');
+  if (wrap && !wrap.contains(e.target)) {
+    document.getElementById('burger-menu').classList.remove('open');
+  }
+});
+
+// Close modals on overlay click
+try {
+  document.querySelectorAll('.modal-overlay').forEach(function(el) {
+    el.addEventListener('click', function(e) {
+      if (e.target === el) el.classList.remove('open');
+    });
+  });
+} catch(e) {}
+
 buildSettingsUI();
 
 var lastBoard = null;
 var generationCancelled = false;
-
-// How many attempts before auto-disabling good_gets_bad
-var GOOD_GETS_BAD_FALLBACK_AFTER = 15;
-
-function disableRuleInUI(ruleId) {
-  active[ruleId] = false;
-  var grid = document.getElementById('rules-grid');
-  var wrap = grid.querySelector('[data-ruleid="' + ruleId + '"]');
-  if (!wrap) return;
-  var toggle = wrap.querySelector('.rule-toggle');
-  if (toggle) {
-    toggle.classList.remove('active');
-    toggle.classList.add('rule-auto-disabled');
-    setTimeout(function(){ toggle.classList.remove('rule-auto-disabled'); }, 2500);
-  }
-}
 
 function doGenerateWithRetry(isInitial) {
   // Mark any previous run as cancelled
@@ -1094,12 +1284,6 @@ function doGenerateWithRetry(isInitial) {
     attempt++;
     st.textContent = 'Versuch ' + attempt + ' von ' + MAX_ATTEMPTS + ' …';
 
-    // After GOOD_GETS_BAD_FALLBACK_AFTER attempts, quietly drop good_gets_bad if still active
-    if (!goodGetsBadDropped && active['good_gets_bad'] && attempt > GOOD_GETS_BAD_FALLBACK_AFTER) {
-      goodGetsBadDropped = true;
-      disableRuleInUI('good_gets_bad');
-      st.textContent = 'Option „6/8 mit 2/12“ wird übersprungen – Versuch ' + attempt + ' …';
-    }
 
     var board = generate();
 
@@ -1111,16 +1295,9 @@ function doGenerateWithRetry(isInitial) {
       draw(board);
       btn.disabled = false;
       btn.innerHTML = '&#9881; Neues Spielfeld';
-      if (goodGetsBadDropped) {
-        st.className = 'status ok';
-        st.innerHTML = '&#10003; Gefunden nach ' + attempt +
-          (attempt === 1 ? ' Versuch' : ' Versuchen') + ' (' + dt + ' ms)' +
-          ' &nbsp;<span style="color:#d4952a;font-style:normal;">&#9888; Option „6/8 mit 2/12“ wurde deaktiviert</span>';
-      } else {
-        st.className = 'status ok';
-        st.textContent = '✓ Gefunden nach ' + attempt +
-          (attempt === 1 ? ' Versuch' : ' Versuchen') + ' (' + dt + ' ms)';
-      }
+      st.className = 'status ok';
+      st.textContent = '\u2713 Gefunden nach ' + attempt +
+        (attempt === 1 ? ' Versuch' : ' Versuchen') + ' (' + dt + ' ms)';
     } else if (attempt >= MAX_ATTEMPTS) {
       // Give up – ask user to adjust settings
       btn.disabled = false;
@@ -1141,6 +1318,8 @@ document.getElementById('gen-btn').addEventListener('click', function() {
 
 // Initial load
 doGenerateWithRetry(true);
+
+}); // DOMContentLoaded
 </script>
 </body>
 </html>
