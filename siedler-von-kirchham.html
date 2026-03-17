@@ -1373,6 +1373,7 @@ function buildDicePage() {
     h += '<button class="house-popup-item" onclick="setWinner('+i+')">&#127942; Sieger</button>';
     h += '</div>';
     h += '</div>';
+    h += '<input type="color" class="dp-color no-print" value="'+col+'" data-pi="'+i+'" onchange="diceColorChange(this)" title="Farbe wählen">';
     h += '<input type="text" class="dp-name" placeholder="Spieler '+(i+1)+'" value="'+nm+'" data-pi="'+i+'" oninput="diceNameChange(this)" maxlength="20">';
     if (isWinner) h += '<span style="margin-left:6px;font-size:16px;" title="Sieger">&#127942;</span>';
     h += '</div>';
