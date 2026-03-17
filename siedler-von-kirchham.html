@@ -1509,6 +1509,7 @@ function diceNameChange(el) {
 
 function diceReset() {
   diceState.turns=0;
+  diceState.winnerIndex=-1;
   for(var n in diceState.counts) diceState.counts[n]=0;
   buildDicePage();
 }
@@ -1520,9 +1521,12 @@ function toggleHousePopup(i) {
 }
 
 function setWinner(i) {
-  diceState.winnerIndex = i;
-  loserTextIndex = (loserTextIndex + 1) % LOSER_TEXTS.length;
-  // Close popups
+  if (diceState.winnerIndex === i) {
+    diceState.winnerIndex = -1;
+  } else {
+    diceState.winnerIndex = i;
+    loserTextIndex = (loserTextIndex + 1) % LOSER_TEXTS.length;
+  }
   document.querySelectorAll('.house-popup').forEach(function(p){ p.classList.remove('open'); });
   buildDicePage();
 }
