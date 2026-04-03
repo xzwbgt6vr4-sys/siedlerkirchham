@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<title>Stadt · Land · Fluss</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@300;700;900&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --ink: #1a1208; --cream: #f5f0e8; --paper: #fdf8f0;
+  --gold: #c8922a; --green: #3a6b4a; --red: #b83c2b; --blue: #2b4b8c;
+}
+body {
+  background: var(--cream); font-family: 'DM Mono', monospace;
+  color: var(--ink); min-height: 100vh; -webkit-tap-highlight-color: transparent;
+}
+.app {
+  min-height: 100vh; display: flex; flex-direction: column; align-items: center;
+  padding: 1.5rem 1rem 3rem;
+  background: var(--cream);
+  background-image:
+    radial-gradient(circle at 20% 20%, rgba(200,146,42,0.06) 0%, transparent 60%),
+    radial-gradient(circle at 80% 80%, rgba(58,107,74,0.06) 0%, transparent 60%);
+}
+.game-title {
+  font-family: 'Fraunces', serif; font-weight: 900;
+  font-size: clamp(2rem, 8vw, 3.5rem); letter-spacing: -0.02em;
+  color: var(--ink); text-align: center; line-height: 1; margin-bottom: 0.2em;
+}
+.game-title span { color: var(--gold); }
+.subtitle {
+  font-size: 0.7rem; letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--gold); text-align: center; margin-bottom: 2rem;
+}
+
+/* API KEY BANNER */
+.api-banner {
+  width: 100%; max-width: 600px; background: #fff8e7;
+  border: 1.5px solid var(--gold); border-radius: 2px;
+  padding: 0.7rem 1rem; margin-bottom: 0.8rem;
+  display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;
+}
+.api-banner label { font-size: 0.75rem; white-space: nowrap; }
+.api-key-input {
+  flex: 1; min-width: 120px; padding: 0.35rem 0.6rem;
+  border: 1.5px solid var(--gold); border-radius: 2px;
+  font-family: 'DM Mono', monospace; font-size: 0.75rem;
+  background: var(--cream); color: var(--ink);
+}
+.api-hint { font-size: 0.65rem; opacity: 0.55; width: 100%; }
+.api-ok { color: var(--green); font-size: 0.75rem; font-weight: 500; }
+
+/* CARD */
+.card {
+  background: var(--paper); border: 2px solid var(--ink); border-radius: 2px;
+  padding: 1.4rem; width: 100%; max-width: 600px;
+  box-shadow: 4px 4px 0 var(--ink); margin-bottom: 1rem;
+}
+.card-title {
+  font-family: 'Fraunces', serif; font-weight: 700; font-size: 1rem;
+  margin-bottom: 0.9rem; display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;
+  border-bottom: 1px solid var(--ink); padding-bottom: 0.5rem; flex-wrap: wrap;
+}
+
+/* CHIPS */
+.chips { display: flex; flex-wrap: wrap; gap: 0.45rem; }
+.chip {
+  padding: 0.3rem 0.75rem; border: 1.5px solid var(--ink); border-radius: 100px;
+  font-family: 'DM Mono', monospace; font-size: 0.76rem; cursor: pointer;
+  background: transparent; color: var(--ink); transition: all 0.13s; user-select: none;
+}
+.chip.active { background: var(--ink); color: var(--cream); }
+.chip.extra { border-color: var(--blue); color: var(--blue); }
+.chip.extra.active { background: var(--blue); color: white; }
+.chip.custom { border-color: var(--green); color: var(--green); }
+.chip.custom.active { background: var(--green); color: white; }
+.chip-x {
+  display: inline-flex; align-items: center; justify-content: center;
+  margin-left: 4px; width: 14px; height: 14px; border-radius: 50%;
+  background: rgba(255,255,255,0.3); font-size: 10px; cursor: pointer; vertical-align: middle;
+}
+
+/* CUSTOM INPUT */
+.custom-input-row { display: flex; gap: 0.5rem; align-items: center; margin-top: 0.8rem; }
+.custom-input {
+  flex: 1; padding: 0.45rem 0.75rem; border: 1.5px solid var(--green);
+  background: var(--cream); font-family: 'DM Mono', monospace; font-size: 0.85rem;
+  border-radius: 2px; color: var(--ink); outline: none;
+}
+.custom-input:focus { box-shadow: 0 0 0 2px rgba(58,107,74,0.2); }
+.custom-input::placeholder { opacity: 0.4; }
+
+/* CONTROLS */
+.row { display: flex; align-items: center; gap: 0.8rem; flex-wrap: wrap; margin-bottom: 0.8rem; }
+.row:last-child { margin-bottom: 0; }
+.label { font-size: 0.78rem; }
+.num-input {
+  width: 70px; padding: 0.4rem 0.6rem; border: 1.5px solid var(--ink);
+  background: var(--cream); font-family: 'DM Mono', monospace; font-size: 1rem;
+  text-align: center; border-radius: 2px; color: var(--ink);
+}
+.toggle-group { display: flex; border: 1.5px solid var(--ink); border-radius: 2px; overflow: hidden; }
+.toggle-btn {
+  padding: 0.4rem 1rem; border: none; background: transparent;
+  font-family: 'DM Mono', monospace; font-size: 0.78rem; cursor: pointer; color: var(--ink);
+}
+.toggle-btn.active { background: var(--ink); color: var(--cream); }
+
+/* SWITCH */
+.blind-toggle { display: flex; align-items: center; gap: 0.7rem; cursor: pointer; user-select: none; }
+.switch {
+  width: 44px; height: 24px; background: #ccc; border-radius: 100px;
+  position: relative; border: 1.5px solid var(--ink); transition: background 0.2s; flex-shrink: 0;
+}
+.switch.on { background: var(--ink); }
+.switch::after {
+  content: ''; position: absolute; top: 2px; left: 2px;
+  width: 16px; height: 16px; border-radius: 50%; background: var(--cream); transition: transform 0.2s;
+}
+.switch.on::after { transform: translateX(20px); }
+.switch-label { font-size: 0.78rem; line-height: 1.3; }
+
+/* BUTTONS */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+  padding: 0.9rem 2rem; font-family: 'Fraunces', serif; font-weight: 700; font-size: 1.1rem;
+  border: 2px solid var(--ink); border-radius: 2px; cursor: pointer; transition: all 0.12s;
+  box-shadow: 3px 3px 0 var(--ink); user-select: none; text-decoration: none;
+  -webkit-tap-highlight-color: transparent; background: transparent; color: var(--ink);
+}
+.btn:active { transform: translate(2px,2px); box-shadow: 1px 1px 0 var(--ink); }
+.btn-primary { background: var(--ink); color: var(--cream); }
+.btn-green { background: var(--green); color: white; border-color: var(--green); box-shadow: 3px 3px 0 rgba(0,0,0,0.3); }
+.btn-red { background: var(--red); color: white; border-color: var(--red); box-shadow: 3px 3px 0 rgba(0,0,0,0.3); }
+.btn-sm { padding: 0.35rem 0.8rem; font-size: 0.78rem; box-shadow: 2px 2px 0 var(--ink); }
+.btn-full { width: 100%; max-width: 600px; }
+.btn-green-outline { border-color: var(--green); color: var(--green); }
+
+/* SCREENS */
+.screen { display: none; width: 100%; max-width: 600px; flex-direction: column; align-items: center; gap: 1rem; }
+.screen.active { display: flex; }
+.setup-wrap { display: none; width: 100%; max-width: 600px; flex-direction: column; gap: 1rem; }
+.setup-wrap.active { display: flex; }
+
+.round-badge {
+  font-size: 0.72rem; letter-spacing: 0.15em; text-transform: uppercase;
+  color: var(--gold); border: 1px solid var(--gold); padding: 0.2rem 0.8rem; border-radius: 100px;
+}
+
+/* COUNTING */
+.counter-box {
+  background: var(--ink); color: var(--cream); border-radius: 4px;
+  width: 100%; max-width: 600px; padding: 3rem 1rem; text-align: center;
+  position: relative; overflow: hidden;
+}
+.counter-box::before {
+  content:''; position:absolute; inset:0;
+  background: repeating-linear-gradient(45deg,transparent,transparent 20px,rgba(255,255,255,0.02) 20px,rgba(255,255,255,0.02) 40px);
+}
+.counter-letter {
+  font-family: 'Fraunces', serif; font-weight: 900;
+  font-size: clamp(5rem, 25vw, 10rem); line-height: 1; color: var(--gold);
+  position: relative; z-index: 1; animation: popIn 0.12s ease;
+}
+.counter-blind {
+  font-family: 'Fraunces', serif; font-weight: 900;
+  font-size: clamp(3rem, 15vw, 7rem); line-height: 1;
+  color: rgba(200,146,42,0.18); position: relative; z-index: 1; letter-spacing: 0.15em;
+  animation: breathe 1.8s ease-in-out infinite;
+}
+@keyframes breathe { 0%,100%{opacity:0.18} 50%{opacity:0.38} }
+@keyframes popIn { 0%{transform:scale(0.7);opacity:0.3} 100%{transform:scale(1);opacity:1} }
+.counter-hint {
+  font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase;
+  color: rgba(245,240,232,0.4); margin-top: 1rem; position: relative; z-index: 1;
+}
+.mic-dot {
+  display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+  background: #e74c3c; margin-right: 6px; animation: blink 1s infinite;
+}
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+
+/* RESULT */
+.result-box {
+  background: var(--paper); border: 3px solid var(--ink); border-radius: 4px;
+  width: 100%; padding: 2rem 1rem; text-align: center; box-shadow: 6px 6px 0 var(--ink);
+}
+.result-letter { font-family: 'Fraunces', serif; font-weight: 900; font-size: clamp(4.5rem,20vw,8rem); line-height: 1; }
+.result-name { font-size: 0.9rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--gold); margin-top: 0.3rem; }
+
+/* SUGGESTIONS */
+.suggestions-grid { display: flex; flex-direction: column; gap: 0.55rem; width: 100%; }
+.suggestion-row {
+  border: 1.5px solid var(--ink); border-radius: 2px; overflow: hidden;
+  background: var(--paper); cursor: pointer;
+}
+.suggestion-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0.6rem 0.85rem; background: var(--ink); color: var(--cream);
+}
+.suggestion-cat { font-family: 'Fraunces', serif; font-weight: 700; font-size: 0.92rem; }
+.suggestion-arrow { font-size: 0.75rem; opacity: 0.5; transition: transform 0.2s; display: inline-block; }
+.suggestion-arrow.open { transform: rotate(90deg); }
+.suggestion-answers { display: flex; gap: 0.5rem; flex-wrap: wrap; padding: 0.65rem 0.85rem; animation: slideDown 0.18s ease; }
+@keyframes slideDown { from{opacity:0;transform:translateY(-5px)} to{opacity:1;transform:translateY(0)} }
+.suggestion-tag {
+  padding: 0.3rem 0.75rem; background: var(--cream); border: 1.5px solid var(--gold);
+  border-radius: 100px; font-size: 0.85rem; font-family: 'Fraunces', serif; font-weight: 700;
+}
+.letter-hl { color: var(--gold); }
+.loading-row { display: flex; gap: 5px; justify-content: center; padding: 0.8rem 0; }
+.loading-row span { width: 7px; height: 7px; border-radius: 50%; background: var(--gold); animation: bounce 1.2s infinite; }
+.loading-row span:nth-child(2) { animation-delay: 0.2s; }
+.loading-row span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes bounce { 0%,80%,100%{transform:scale(0.7);opacity:0.4} 40%{transform:scale(1);opacity:1} }
+
+/* GRIDS */
+.used-letters { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.used-letter {
+  width: 2rem; height: 2rem; display: flex; align-items: center; justify-content: center;
+  border: 1.5px solid var(--ink); font-family: 'Fraunces', serif; font-weight: 700;
+  font-size: 0.9rem; border-radius: 2px; background: var(--ink); color: var(--cream);
+}
+.cats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 0.5rem; width: 100%; }
+.cat-item { border: 1.5px solid var(--ink); border-radius: 2px; padding: 0.55rem 0.7rem; font-size: 0.78rem; text-align: center; background: var(--paper); }
+
+/* FINISHED */
+.finished-box { text-align: center; padding: 2rem; }
+.finished-title { font-family: 'Fraunces', serif; font-weight: 900; font-size: clamp(2.5rem,10vw,5rem); color: var(--gold); }
+
+.hint-text { font-size: 0.7rem; opacity: 0.45; text-align: center; letter-spacing: 0.07em; }
+.gap { height: 0.3rem; }
+
+/* PRINT */
+@media print {
+  body > .app { display: none; }
+  .print-area { display: block !important; }
+}
+.print-area { display: none; }
+.print-sheet { page-break-after: always; padding: 20mm; font-family: Arial, sans-serif; }
+.print-header h2 { font-size: 18pt; margin-bottom: 12pt; border-bottom: 2pt solid #000; padding-bottom: 6pt; }
+.print-table { width: 100%; border-collapse: collapse; font-size: 9pt; }
+.print-table th, .print-table td { border: 1pt solid #888; padding: 5pt 4pt; text-align: left; height: 22pt; }
+.print-table th { background: #f0f0f0; font-weight: bold; font-size: 8pt; text-transform: uppercase; }
+.print-table td:first-child, .print-table td:nth-child(2) { width: 18pt; text-align: center; }
+.print-table tr:nth-child(even) td { background: #fafafa; }
+</style>
+</head>
+<body>
+
+<!-- PRINT AREA (only visible when printing) -->
+<div class="print-area" id="printArea"></div>
+
+<div class="app" id="app">
+  <h1 class="game-title">Stadt<span>·</span>Land<span>·</span>Fluss</h1>
+  <p class="subtitle">Der digitale Spielleiter</p>
+
+  <!-- API KEY -->
+  <div class="api-banner" id="apiBanner">
+    <label for="apiKeyInput">🔑 Anthropic API-Key:</label>
+    <input type="password" id="apiKeyInput" class="api-key-input" placeholder="sk-ant-..." autocomplete="off" spellcheck="false">
+    <span id="apiStatus" class="api-hint">Für KI-Vorschläge benötigt · wird nur lokal gespeichert</span>
+  </div>
+
+  <!-- SETUP -->
+  <div class="setup-wrap active" id="screenSetup">
+    <div class="card">
+      <div class="card-title">📋 Standard-Kategorien</div>
+      <div class="chips" id="standardChips"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">🎲 Extra-Kategorien</div>
+      <div class="chips" id="extraChips"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">✏️ Eigene Kategorien</div>
+      <div class="chips" id="customChips"></div>
+      <div class="custom-input-row">
+        <input type="text" id="customInput" class="custom-input" placeholder="z.B. Superheld, Pasta-Gericht…" maxlength="40">
+        <button class="btn btn-sm btn-green-outline" onclick="addCustomCat()">+ hinzufügen</button>
+      </div>
+      <p style="font-size:0.7rem;opacity:0.45;margin-top:0.5rem;">Enter oder Knopf · wird automatisch ausgewählt</p>
+    </div>
+    <div class="card">
+      <div class="card-title">⚙️ Spieleinstellungen</div>
+      <div class="row">
+        <span class="label">Runden:</span>
+        <div class="toggle-group">
+          <button class="toggle-btn active" id="btnFixed" onclick="setRoundMode('fixed')">Fest</button>
+          <button class="toggle-btn" id="btnFree" onclick="setRoundMode('free')">Frei</button>
+        </div>
+        <input type="number" id="totalRoundsInput" class="num-input" min="1" max="26" value="10">
+      </div>
+      <div class="row">
+        <span class="label">Spieler (Ausdruck):</span>
+        <input type="number" id="playerCountInput" class="num-input" min="1" max="12" value="4">
+      </div>
+      <div class="row">
+        <label class="blind-toggle" onclick="toggleBlind()">
+          <div class="switch" id="blindSwitch"></div>
+          <span class="switch-label" id="blindLabel">👁️ Buchstabe beim Zählen sichtbar</span>
+        </label>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">🖨️ Ausdrucke</div>
+      <p id="printInfo" style="font-size:0.78rem;margin-bottom:0.8rem;opacity:0.7;"></p>
+      <button class="btn btn-sm" onclick="doPrint()">🖨️ A4-Bögen drucken</button>
+    </div>
+    <button class="btn btn-primary btn-full" style="font-size:1.25rem;padding:1.2rem;" onclick="startGame()">Spiel starten →</button>
+  </div>
+
+  <!-- READY -->
+  <div class="screen" id="screenReady">
+    <div class="round-badge" id="readyBadge"></div>
+    <div class="card" style="width:100%">
+      <div class="card-title">🗂️ Kategorien</div>
+      <div class="cats-grid" id="readyCats"></div>
+    </div>
+    <div class="card" id="usedCard" style="width:100%;display:none">
+      <div class="card-title">✅ Bereits genutzt</div>
+      <div class="used-letters" id="usedLettersList"></div>
+    </div>
+    <button class="btn btn-green btn-full" style="font-size:1.5rem;padding:1.5rem;" onclick="startCounting()">▶ Zählen starten</button>
+    <p class="hint-text">oder Leertaste drücken</p>
+    <button class="btn btn-sm" style="margin-top:0.3rem;" onclick="showSetup()">← Einstellungen</button>
+  </div>
+
+  <!-- COUNTING -->
+  <div class="screen" id="screenCounting">
+    <div class="round-badge" id="countingBadge"></div>
+    <div class="counter-box" style="max-width:600px;width:100%;">
+      <div id="counterDisplay" class="counter-letter">A</div>
+      <div class="counter-hint" id="counterHint">Tippe auf STOPP</div>
+    </div>
+    <button class="btn btn-red btn-full" style="font-size:2rem;padding:1.8rem;" onclick="stopCounting()">⏹ STOPP</button>
+    <p class="hint-text">Ruf „Stopp!" · Leertaste · oder Knopf</p>
+  </div>
+
+  <!-- STOPPED -->
+  <div class="screen" id="screenStopped">
+    <div class="round-badge" id="stoppedBadge"></div>
+    <div class="result-box">
+      <div class="result-letter" id="resultLetter"></div>
+      <div class="result-name" id="resultName"></div>
+    </div>
+    <div class="card" style="width:100%">
+      <div class="card-title">
+        <span>✨ Lösungsvorschläge der App</span>
+        <button class="btn btn-sm" id="revealAllBtn" style="font-size:0.72rem;display:none;" onclick="revealAll()">alle aufdecken</button>
+      </div>
+      <div id="suggestionsArea"></div>
+    </div>
+    <button class="btn btn-green btn-full" style="font-size:1.25rem;padding:1.3rem;" id="nextRoundBtn" onclick="nextRound()">Nächste Runde →</button>
+  </div>
+
+  <!-- FINISHED -->
+  <div class="screen" id="screenFinished">
+    <div class="card" style="width:100%">
+      <div class="finished-box">
+        <div style="font-size:3rem;margin-bottom:0.5rem;">🎉</div>
+        <div class="finished-title">Spiel vorbei!</div>
+        <p id="finishedInfo" style="margin-top:1rem;font-size:0.85rem;opacity:0.7;"></p>
+        <div class="used-letters" id="finishedLetters" style="margin-top:1.2rem;justify-content:center;"></div>
+      </div>
+    </div>
+    <button class="btn btn-primary btn-full" style="font-size:1.2rem;padding:1.2rem;" onclick="resetGame()">🔄 Neues Spiel</button>
+  </div>
+</div>
+
+<script>
+// ── DATA ──────────────────────────────────────────────────────────────────
+const STANDARD_CATS = ["Stadt","Land","Fluss","Tier","Pflanze","Beruf"];
+const EXTRA_CATS = [
+  "Vorname","Nachname","Film","Serie","Sänger/Band","Sportler",
+  "Marke","Automarke","Essen","Getränk","Kleidungsstück","Farbe",
+  "Instrument","Hobby","Superkraft","Schimpfwort","Ausrede","Entschuldigung",
+  "Parteiname","Politiker","Videospiel","Pokémon","Disney-Figur",
+  "Dinge im Bad","Dinge in der Küche","Dinge im Büro","Urlaubsziel",
+  "Angst","Glücksmoment","Körperteil","Krankheit","Medikament",
+  "Zaubertrank-Zutat","Fabelwesen","Dinosaurier","Weltraum-Ding",
+];
+const LETTERS = "ABCDEFGHIJKLMNOPRSTUVWZ".split("");
+const LETTER_NAMES = {
+  A:"A",B:"Be",C:"Ce",D:"De",E:"E",F:"Ef",G:"Ge",H:"Ha",
+  I:"I",J:"Jot",K:"Ka",L:"El",M:"Em",N:"En",O:"O",P:"Pe",
+  R:"Er",S:"Es",T:"Te",U:"U",V:"Vau",W:"We",Z:"Zet"
+};
+
+// ── STATE ─────────────────────────────────────────────────────────────────
+let selectedCats = ["Stadt","Land","Fluss","Tier"];
+let customCats = [];
+let roundMode = "fixed";
+let totalRounds = 10;
+let playerCount = 4;
+let blindMode = false;
+
+let currentRound = 1;
+let usedLetters = [];
+let currentLetter = "";
+let countIdx = 0;
+let countInterval = null;
+let listening = false;
+let recognition = null;
+let suggestions = {};
+let revealedCats = new Set();
+
+// ── SPEECH ────────────────────────────────────────────────────────────────
+function speak(text) {
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = "de-DE"; u.rate = 0.95;
+  window.speechSynthesis.speak(u);
+}
+
+// ── API KEY ───────────────────────────────────────────────────────────────
+const apiKeyInput = document.getElementById("apiKeyInput");
+const apiStatus = document.getElementById("apiStatus");
+
+// Load saved key
+const savedKey = localStorage.getItem("slf_api_key");
+if (savedKey) {
+  apiKeyInput.value = savedKey;
+  apiStatus.textContent = "✓ Key gespeichert";
+  apiStatus.className = "api-ok";
+}
+apiKeyInput.addEventListener("input", () => {
+  const v = apiKeyInput.value.trim();
+  if (v.startsWith("sk-ant-") && v.length > 20) {
+    localStorage.setItem("slf_api_key", v);
+    apiStatus.textContent = "✓ Key gespeichert";
+    apiStatus.className = "api-ok";
+  } else {
+    localStorage.removeItem("slf_api_key");
+    apiStatus.textContent = "Für KI-Vorschläge benötigt · wird nur lokal gespeichert";
+    apiStatus.className = "api-hint";
+  }
+});
+
+function getApiKey() { return apiKeyInput.value.trim(); }
+
+// ── SUGGESTIONS ───────────────────────────────────────────────────────────
+async function fetchSuggestions(letter, categories) {
+  const key = getApiKey();
+  if (!key) return {};
+  const prompt = `Du bist Spielleiter bei Stadt-Land-Fluss. Der aktuelle Buchstabe ist "${letter}".
+Gib für jede der folgenden Kategorien genau 3 kreative, korrekte und abwechslungsreiche Lösungsvorschläge an, die alle mit dem Buchstaben "${letter}" beginnen.
+Kategorien: ${categories.join(", ")}
+
+Antworte NUR mit einem validen JSON-Objekt, ohne Markdown, ohne Erklärung. Format:
+{"Kategorie1": ["Antwort1","Antwort2","Antwort3"], "Kategorie2": ["Antwort1","Antwort2","Antwort3"]}`;
+  try {
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-api-key": key, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
+      body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 1000, messages: [{ role: "user", content: prompt }] })
+    });
+    const data = await res.json();
+    const text = (data.content||[]).map(b=>b.text||"").join("");
+    return JSON.parse(text.replace(/```json|```/g,"").trim());
+  } catch { return {}; }
+}
+
+// ── SETUP UI ──────────────────────────────────────────────────────────────
+function renderChips() {
+  // Standard
+  const sc = document.getElementById("standardChips");
+  sc.innerHTML = "";
+  STANDARD_CATS.forEach(c => {
+    const b = document.createElement("button");
+    b.className = "chip" + (selectedCats.includes(c) ? " active" : "");
+    b.textContent = c;
+    b.onclick = () => toggleCat(c, b, "");
+    sc.appendChild(b);
+  });
+  // Extra
+  const ec = document.getElementById("extraChips");
+  ec.innerHTML = "";
+  EXTRA_CATS.forEach(c => {
+    const b = document.createElement("button");
+    b.className = "chip extra" + (selectedCats.includes(c) ? " active" : "");
+    b.textContent = c;
+    b.onclick = () => toggleCat(c, b, "extra");
+    ec.appendChild(b);
+  });
+  // Custom
+  renderCustomChips();
+  // Print info
+  document.getElementById("printInfo").textContent =
+    `${selectedCats.length} Kategorien · ${playerCount} Spieler · ${roundMode==="fixed"?totalRounds+" Runden":"unbegrenzt"}`;
+}
+
+function renderCustomChips() {
+  const cc = document.getElementById("customChips");
+  cc.innerHTML = "";
+  customCats.forEach(c => {
+    const b = document.createElement("button");
+    b.className = "chip custom" + (selectedCats.includes(c) ? " active" : "");
+    const txt = document.createTextNode(c);
+    b.appendChild(txt);
+    const x = document.createElement("span");
+    x.className = "chip-x";
+    x.textContent = "✕";
+    x.onclick = (e) => { e.stopPropagation(); removeCustomCat(c); };
+    b.appendChild(x);
+    b.onclick = () => toggleCat(c, b, "custom");
+    cc.appendChild(b);
+  });
+}
+
+function toggleCat(c, btn, type) {
+  if (selectedCats.includes(c)) {
+    if (selectedCats.length <= 1) return;
+    selectedCats = selectedCats.filter(x => x !== c);
+    btn.classList.remove("active");
+  } else {
+    selectedCats.push(c);
+    btn.classList.add("active");
+  }
+  document.getElementById("printInfo").textContent =
+    `${selectedCats.length} Kategorien · ${playerCount} Spieler · ${roundMode==="fixed"?totalRounds+" Runden":"unbegrenzt"}`;
+}
+
+function addCustomCat() {
+  const inp = document.getElementById("customInput");
+  const val = inp.value.trim();
+  if (!val) return;
+  const all = [...STANDARD_CATS, ...EXTRA_CATS, ...customCats];
+  if (all.map(c=>c.toLowerCase()).includes(val.toLowerCase())) {
+    if (!selectedCats.includes(val)) selectedCats.push(val);
+    renderChips();
+    inp.value = "";
+    inp.focus();
+    return;
+  }
+  customCats.push(val);
+  selectedCats.push(val);
+  inp.value = "";
+  renderCustomChips();
+  inp.focus();
+  document.getElementById("printInfo").textContent =
+    `${selectedCats.length} Kategorien · ${playerCount} Spieler · ${roundMode==="fixed"?totalRounds+" Runden":"unbegrenzt"}`;
+}
+
+function removeCustomCat(c) {
+  customCats = customCats.filter(x => x !== c);
+  selectedCats = selectedCats.filter(x => x !== c);
+  renderCustomChips();
+}
+
+document.getElementById("customInput").addEventListener("keydown", e => {
+  if (e.key === "Enter") { e.preventDefault(); addCustomCat(); }
+});
+
+function setRoundMode(mode) {
+  roundMode = mode;
+  document.getElementById("btnFixed").classList.toggle("active", mode==="fixed");
+  document.getElementById("btnFree").classList.toggle("active", mode==="free");
+  document.getElementById("totalRoundsInput").style.display = mode==="fixed" ? "" : "none";
+}
+
+function toggleBlind() {
+  blindMode = !blindMode;
+  document.getElementById("blindSwitch").classList.toggle("on", blindMode);
+  document.getElementById("blindLabel").textContent = blindMode
+    ? "🙈 Blindes Zählen – Buchstabe bleibt verborgen"
+    : "👁️ Buchstabe beim Zählen sichtbar";
+}
+
+document.getElementById("totalRoundsInput").addEventListener("change", e => {
+  totalRounds = Math.max(1, Math.min(26, parseInt(e.target.value)||10));
+  e.target.value = totalRounds;
+});
+document.getElementById("playerCountInput").addEventListener("change", e => {
+  playerCount = Math.max(1, Math.min(12, parseInt(e.target.value)||4));
+  e.target.value = playerCount;
+});
+
+// ── PRINT ─────────────────────────────────────────────────────────────────
+function doPrint() {
+  totalRounds = parseInt(document.getElementById("totalRoundsInput").value)||10;
+  playerCount = parseInt(document.getElementById("playerCountInput").value)||4;
+  const rounds = roundMode==="fixed" ? totalRounds : 15;
+  const area = document.getElementById("printArea");
+  area.innerHTML = "";
+  for (let p = 1; p <= playerCount; p++) {
+    const sheet = document.createElement("div");
+    sheet.className = "print-sheet";
+    let rows = "";
+    for (let r = 1; r <= rounds; r++) {
+      rows += `<tr><td>${r}</td><td></td>${selectedCats.map(()=>"<td></td>").join("")}<td></td></tr>`;
+    }
+    sheet.innerHTML = `
+      <div class="print-header"><h2>Stadt · Land · Fluss &nbsp;·&nbsp; Spieler ${p}</h2></div>
+      <table class="print-table">
+        <thead><tr><th>#</th><th>Bst.</th>${selectedCats.map(c=>`<th>${c}</th>`).join("")}<th>Punkte</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>`;
+    area.appendChild(sheet);
+  }
+  setTimeout(() => window.print(), 200);
+}
+
+// ── SCREENS ───────────────────────────────────────────────────────────────
+function showScreen(id) {
+  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+  document.querySelectorAll(".setup-wrap").forEach(s => s.classList.remove("active"));
+  const el = document.getElementById(id);
+  el.classList.add("active");
+}
+
+function showSetup() {
+  document.getElementById("screenSetup").classList.add("active");
+  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+  renderChips();
+}
+
+// ── GAME FLOW ─────────────────────────────────────────────────────────────
+function startGame() {
+  totalRounds = parseInt(document.getElementById("totalRoundsInput").value)||10;
+  playerCount = parseInt(document.getElementById("playerCountInput").value)||4;
+  currentRound = 1;
+  usedLetters = [];
+  currentLetter = "";
+  showReady();
+}
+
+function showReady() {
+  document.getElementById("screenSetup").classList.remove("active");
+  showScreen("screenReady");
+  document.getElementById("readyBadge").textContent =
+    `Runde ${currentRound}` + (roundMode==="fixed" ? ` von ${totalRounds}` : "");
+  // cats grid
+  const cg = document.getElementById("readyCats");
+  cg.innerHTML = selectedCats.map(c=>`<div class="cat-item">${c}</div>`).join("");
+  // used letters
+  const uc = document.getElementById("usedCard");
+  const ul = document.getElementById("usedLettersList");
+  if (usedLetters.length > 0) {
+    uc.style.display = "";
+    ul.innerHTML = usedLetters.map(l=>`<div class="used-letter">${l}</div>`).join("");
+  } else {
+    uc.style.display = "none";
+  }
+}
+
+function startCounting() {
+  const spd = 180 + Math.random() * 420;
+  countIdx = 0;
+  showScreen("screenCounting");
+  document.getElementById("countingBadge").textContent =
+    `Runde ${currentRound}` + (blindMode ? " · 🙈 blind" : "");
+
+  const display = document.getElementById("counterDisplay");
+  if (blindMode) {
+    display.className = "counter-blind";
+    display.textContent = "· · ·";
+  } else {
+    display.className = "counter-letter";
+    display.textContent = LETTERS[0];
+  }
+
+  speak("Ich fange an zu zählen – A");
+
+  countInterval = setInterval(() => {
+    countIdx = (countIdx + 1) % LETTERS.length;
+    if (!blindMode) {
+      display.style.animation = "none";
+      display.offsetHeight; // reflow
+      display.style.animation = "";
+      display.textContent = LETTERS[countIdx];
+    }
+  }, spd);
+
+  // Speech recognition
+  startListening();
+  updateCounterHint();
+}
+
+function startListening() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) { updateCounterHint(); return; }
+  try {
+    recognition = new SR();
+    recognition.lang = "de-DE";
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.onresult = (e) => {
+      const t = Array.from(e.results).map(r=>r[0].transcript).join(" ").toLowerCase();
+      if (t.includes("stopp") || t.includes("stop")) stopCounting();
+    };
+    recognition.onend = () => { if (listening) { try { recognition.start(); } catch(_){} } };
+    recognition.start();
+    listening = true;
+    updateCounterHint();
+  } catch(_) { updateCounterHint(); }
+}
+
+function updateCounterHint() {
+  const hint = document.getElementById("counterHint");
+  if (hint) hint.innerHTML = listening
+    ? '<span class="mic-dot"></span>Hört auf „Stopp"'
+    : 'Tippe auf STOPP';
+}
+
+function stopCounting() {
+  clearInterval(countInterval);
+  listening = false;
+  try { recognition && recognition.stop(); } catch(_){}
+
+  const letter = LETTERS[countIdx];
+  let chosen = letter;
+
+  if (usedLetters.includes(letter)) {
+    let next = "";
+    for (let i = 1; i < LETTERS.length; i++) {
+      const c = LETTERS[(LETTERS.indexOf(letter) + i) % LETTERS.length];
+      if (!usedLetters.includes(c)) { next = c; break; }
+    }
+    if (!next) { finishGame(); return; }
+    chosen = next;
+    speak(`Ah, hatten wir schon. Wir nehmen einfach den nächsten – ${LETTER_NAMES[next]}`);
+  } else {
+    speak(LETTER_NAMES[letter]);
+  }
+
+  currentLetter = chosen;
+  usedLetters.push(chosen);
+  revealedCats = new Set();
+  suggestions = {};
+
+  showScreen("screenStopped");
+  document.getElementById("stoppedBadge").textContent = `Runde ${currentRound} · Buchstabe`;
+  document.getElementById("resultLetter").textContent = chosen;
+  document.getElementById("resultName").textContent = LETTER_NAMES[chosen];
+
+  const isLast = roundMode==="fixed" && currentRound >= totalRounds;
+  document.getElementById("nextRoundBtn").textContent = isLast ? "🏁 Spiel beenden" : "Nächste Runde →";
+
+  // Load suggestions
+  const area = document.getElementById("suggestionsArea");
+  const revBtn = document.getElementById("revealAllBtn");
+  revBtn.style.display = "none";
+  area.innerHTML = `<p style="font-size:0.75rem;opacity:0.5;margin-bottom:0.5rem;text-align:center;">Überlege Vorschläge…</p>
+    <div class="loading-row"><span></span><span></span><span></span></div>`;
+
+  if (!getApiKey()) {
+    area.innerHTML = `<p style="font-size:0.78rem;opacity:0.5;text-align:center;">Kein API-Key eingegeben – Vorschläge nicht verfügbar</p>`;
+    return;
+  }
+
+  fetchSuggestions(chosen, selectedCats).then(s => {
+    suggestions = s;
+    renderSuggestions();
+  });
+}
+
+function renderSuggestions() {
+  const area = document.getElementById("suggestionsArea");
+  const revBtn = document.getElementById("revealAllBtn");
+  const keys = Object.keys(suggestions);
+
+  if (keys.length === 0) {
+    area.innerHTML = `<p style="font-size:0.78rem;opacity:0.5;text-align:center;">Keine Vorschläge verfügbar</p>`;
+    revBtn.style.display = "none";
+    return;
+  }
+
+  revBtn.style.display = "";
+  let html = `<p class="hint-text" style="margin-bottom:0.5rem;">Tippe auf eine Kategorie zum Aufdecken</p>
+    <div class="suggestions-grid">`;
+
+  selectedCats.forEach(cat => {
+    const revealed = revealedCats.has(cat);
+    const answers = suggestions[cat] || [];
+    const answersHtml = revealed
+      ? `<div class="suggestion-answers">${answers.map(a=>`<span class="suggestion-tag"><span class="letter-hl">${a[0]}</span>${a.slice(1)}</span>`).join("") || '<span style="font-size:0.78rem;opacity:0.5">—</span>'}</div>`
+      : "";
+    html += `<div class="suggestion-row" onclick="toggleReveal('${cat.replace(/'/g,"\\'")}')">
+      <div class="suggestion-header">
+        <span class="suggestion-cat">${cat}</span>
+        <span class="suggestion-arrow ${revealed?'open':''}">▶</span>
+      </div>
+      ${answersHtml}
+    </div>`;
+  });
+
+  html += "</div>";
+  area.innerHTML = html;
+}
+
+function toggleReveal(cat) {
+  if (revealedCats.has(cat)) revealedCats.delete(cat);
+  else revealedCats.add(cat);
+  renderSuggestions();
+}
+
+function revealAll() {
+  selectedCats.forEach(c => revealedCats.add(c));
+  renderSuggestions();
+}
+
+function nextRound() {
+  const next = currentRound + 1;
+  if (roundMode === "fixed" && next > totalRounds) {
+    finishGame();
+  } else {
+    currentRound = next;
+    showReady();
+  }
+}
+
+function finishGame() {
+  speak("Spiel beendet! Super gespielt!");
+  showScreen("screenFinished");
+  document.getElementById("finishedInfo").textContent = `${usedLetters.length} Runden gespielt`;
+  document.getElementById("finishedLetters").innerHTML =
+    usedLetters.map(l=>`<div class="used-letter">${l}</div>`).join("");
+}
+
+function resetGame() {
+  currentRound = 1;
+  usedLetters = [];
+  currentLetter = "";
+  suggestions = {};
+  revealedCats = new Set();
+  showSetup();
+}
+
+// ── KEYBOARD ──────────────────────────────────────────────────────────────
+document.addEventListener("keydown", e => {
+  if (e.code === "Space") {
+    if (document.getElementById("screenCounting").classList.contains("active")) {
+      e.preventDefault(); stopCounting();
+    } else if (document.getElementById("screenReady").classList.contains("active")) {
+      e.preventDefault(); startCounting();
+    }
+  }
+});
+
+// ── INIT ──────────────────────────────────────────────────────────────────
+renderChips();
+</script>
+</body>
+</html>
