@@ -649,7 +649,7 @@ var POOLS = {
 // Tokens: 4p=18 land tiles, 6p=28 land tiles
 var TOKENS = {
   4: [2,3,3,4,4,5,5,6,6,8,8,9,9,10,10,11,11,12],
-  6: [2,2,2,3,3,3,4,4,4,5,5,5,6,6,6,8,8,8,9,9,9,10,10,10,11,11,12,12]
+  6: [2,2,3,3,3,4,4,4,5,5,5,6,6,6,8,8,8,9,9,9,10,10,10,11,11,11,12,12]
 };
 
 // ── HARBOR / SEA RING ─────────────────────────────────────────────────────────
@@ -729,6 +729,7 @@ var RULE_DEFS = [
   {id:'each_res_good', label:'Jeder Rohstoff mind. eine 6 oder 8',    hint:'Gleichmäßige gute Zahlen verteilt',          def:false,  only6:true},
   {id:'no_double_good',label:'Kein Rohstoff mit 6 und 8 zusammen',    hint:'Kein Rohstoff bekommt sowohl 6 als auch 8',           def:false,  only4:true},
   {id:'desert_center', label:'Wüste in der Mitte',                    hint:'Wüste fest im Mittelfeld platzieren',        def:false, only4:true},
+  {id:'no_wood_brick',  label:'Holz und Lehm nie benachbart',          hint:'Verhindert starke Siedlungsfelder durch Trennung von Holz und Lehm', def:false},
   {id:'no_adj_same',   label:'Gleiche Zahlen nie benachbart',         hint:'Extra-streng: kein Zahlenpaar nebeneinander',def:false},
   {id:'fair_dist',     label:'Gerechte Zahlenverteilung',             hint:'Gute Zahlen gleichmäßig auf alle Rohstoffe verteilt, kein Rohstoff bekommt alle schlechten',def:false},
   {id:'show_harbors',  label:'Häfen anzeigen',                        hint:'Hafensymbole am Spielfeldrand einblenden',   def:false},
@@ -832,13 +833,16 @@ function generate() {
     } else {
       ALL.forEach(function(hid,i){t[hid]=pool[i];});
     }
-    if (!active['no_same_res']){tiles=t;break;}
+    if (!active['no_same_res'] && !active['no_wood_brick']){tiles=t;break;}
     var ok=true;
     for (var hi=0;hi<ALL.length;hi++){
       var hid=ALL[hi];
       if(t[hid]==='desert') continue;
       var nb=ADJ[hid];
-      for(var ni=0;ni<nb.length;ni++) if(t[nb[ni]]===t[hid]){ok=false;break;}
+      for(var ni=0;ni<nb.length;ni++){
+        if(active['no_same_res'] && t[nb[ni]]===t[hid]){ok=false;break;}
+        if(active['no_wood_brick'] && ((t[hid]==='wood'&&t[nb[ni]]==='brick')||(t[hid]==='brick'&&t[nb[ni]]==='wood'))){ok=false;break;}
+      }
       if(!ok) break;
     }
     if(ok){tiles=t;break;}
