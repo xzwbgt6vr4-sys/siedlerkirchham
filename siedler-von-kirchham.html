@@ -730,6 +730,7 @@ var RULE_DEFS = [
   {id:'no_double_good',label:'Kein Rohstoff mit 6 und 8 zusammen',    hint:'Kein Rohstoff bekommt sowohl 6 als auch 8',           def:false,  only4:true},
   {id:'desert_center', label:'Wüste in der Mitte',                    hint:'Wüste fest im Mittelfeld platzieren',        def:false, only4:true},
   {id:'no_wood_brick',  label:'Holz und Lehm nie benachbart',          hint:'Verhindert starke Siedlungsfelder durch Trennung von Holz und Lehm', def:false},
+  {id:'no_bad_cluster', label:'3/11 nie neben 2/12',                  hint:'Schwache Zahlen nicht zusammen häufen',       def:false},
   {id:'no_adj_same',   label:'Gleiche Zahlen nie benachbart',         hint:'Extra-streng: kein Zahlenpaar nebeneinander',def:false},
   {id:'fair_dist',     label:'Gerechte Zahlenverteilung',             hint:'Gute Zahlen gleichmäßig auf alle Rohstoffe verteilt, kein Rohstoff bekommt alle schlechten',def:false},
   {id:'show_harbors',  label:'Häfen anzeigen',                        hint:'Hafensymbole am Spielfeldrand einblenden',   def:false},
@@ -894,6 +895,8 @@ function generate() {
       if(active['no_adj_same'] && nbNums[n]) continue;
       if(active['no_adj_good'] && GOOD[n] && (nbNums[6]||nbNums[8])) continue;
       if(active['no_adj_bad']  && BAD[n]  && (nbNums[2]||nbNums[12])) continue;
+      if(active['no_bad_cluster'] && (n===3||n===11) && (nbNums[2]||nbNums[12])) continue;
+      if(active['no_bad_cluster'] && (n===2||n===12) && (nbNums[3]||nbNums[11])) continue;
       if(active['no_dup_on_res']){
         var dup=false;
         for(var j=0;j<i;j++) if(nums[land[j]]===n&&tiles[land[j]]===res){dup=true;break;}
