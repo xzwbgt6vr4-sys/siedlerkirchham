@@ -155,6 +155,25 @@ h1 span{
 .status{font-size:13px;color:var(--dim);font-style:italic;min-width:150px;}
 .status.ok{color:#6aba60;}
 .status.fail{color:#cc5050;}
+#crazy-btn{
+  background:linear-gradient(135deg,#8b0000,#cc2020,#ff4040,#cc2020,#8b0000);
+  background-size:200% auto;
+  color:#fff;border:none;border-radius:10px;
+  padding:13px 18px;
+  font-family:'Cinzel',serif;font-size:13px;font-weight:700;
+  letter-spacing:0.06em;cursor:pointer;
+  transition:background-position 0.4s,transform 0.1s,box-shadow 0.2s;
+  box-shadow:0 4px 20px rgba(200,0,0,0.35);
+  white-space:nowrap;
+}
+#crazy-btn:hover{background-position:right center;box-shadow:0 6px 28px rgba(220,0,0,0.55);}
+#crazy-btn:active{transform:scale(0.98);}
+#crazy-btn.active{
+  background:linear-gradient(135deg,#4a0080,#9020cc,#cc40ff,#9020cc,#4a0080);
+  box-shadow:0 4px 24px rgba(160,0,220,0.5);
+  animation:crazypulse 1.2s ease-in-out infinite;
+}
+@keyframes crazypulse{0%,100%{box-shadow:0 4px 24px rgba(160,0,220,0.5);}50%{box-shadow:0 4px 32px rgba(160,0,220,0.9);}}
 
 /* BOARD */
 #board-wrap{
@@ -604,6 +623,7 @@ svg{display:block;margin:0 auto;}
   <!-- Generate -->
   <div class="gen-row">
     <button id="gen-btn">&#9881; Neues Spielfeld</button>
+    <button id="crazy-btn" onclick="toggleCrazy()" title="Alles deaktivieren – maximales Chaos!">&#128165; Crazy</button>
     <div class="status" id="status">Bereit</div>
   </div>
 
@@ -710,10 +730,12 @@ var RULE_DEFS = [
   {id:'no_double_good',label:'Kein Rohstoff mit 6 und 8 zusammen',    hint:'Kein Rohstoff bekommt sowohl 6 als auch 8',           def:false,  only4:true},
   {id:'desert_center', label:'Wüste in der Mitte',                    hint:'Wüste fest im Mittelfeld platzieren',        def:false, only4:true},
   {id:'no_adj_same',   label:'Gleiche Zahlen nie benachbart',         hint:'Extra-streng: kein Zahlenpaar nebeneinander',def:false},
+  {id:'fair_dist',     label:'Gerechte Zahlenverteilung',             hint:'Gute Zahlen gleichmäßig auf alle Rohstoffe verteilt, kein Rohstoff bekommt alle schlechten',def:false},
   {id:'show_harbors',  label:'Häfen anzeigen',                        hint:'Hafensymbole am Spielfeldrand einblenden',   def:false},
 ];
 
 var active = {};
+var crazyMode = false;
 RULE_DEFS.forEach(function(r){active[r.id]=r.def;});
 
 // ── BUILD ADJ ─────────────────────────────────────────────────────────────────
@@ -755,13 +777,14 @@ function buildSettingsUI() {
     if (rule.only6 && MODE !== 6) wrap.style.display = 'none';
 
     var div = document.createElement('div');
-    div.className = 'rule-toggle' + (active[rule.id]?' active':'');
+    div.className = 'rule-toggle' + (active[rule.id]?' active':'') + (crazyMode?' disabled':'');
     div.dataset.id = rule.id;
     div.innerHTML =
       '<div class="tbox"><span class="tcheck">&#10003;</span></div>'+
       '<div class="rtext">'+rule.label+'<small>'+rule.hint+'</small></div>';
 
     div.addEventListener('click', function(){
+      if (crazyMode) return;
       active[rule.id] = !active[rule.id];
       div.classList.toggle('active', active[rule.id]);
 
@@ -852,6 +875,7 @@ function generate() {
     if(btCount>MAX_BT) return false;
     if(i===land.length){
       if(active['each_res_good']){for(var ri=0;ri<RESOURCES.length;ri++) if(!resHasGood[RESOURCES[ri]]) return false;}
+      if(active['fair_dist']){for(var ri2=0;ri2<RESOURCES.length;ri2++) if(!resHasGood[RESOURCES[ri2]]) return false;}
 
       return true;
     }
@@ -883,8 +907,11 @@ function generate() {
     // Pruning hints for last tile of a resource
     if(remaining===1){
       if(active['each_res_good'] && !resHasGood[res]){var gc=cands.filter(function(n){return GOOD[n];});if(gc.length) cands=gc;}
-
-
+      if(active['fair_dist'] && !resHasGood[res]){var gc2=cands.filter(function(n){return GOOD[n];});if(gc2.length) cands=gc2;}
+    }
+    // fair_dist: if this resource already has 2 good numbers, prefer non-good for remaining tiles
+    if(active['fair_dist'] && (resHas6[res]&&resHas8[res]) && remaining>1){
+      var ng=cands.filter(function(n){return !GOOD[n];});if(ng.length) cands=ng;
     }
     cands=shuffle(cands);
 
@@ -1687,6 +1714,55 @@ buildSettingsUI();
 
 var generationCancelled = false;
 
+function toggleCrazy() {
+  crazyMode = !crazyMode;
+  var btn = document.getElementById('crazy-btn');
+  btn.classList.toggle('active', crazyMode);
+  if (crazyMode) {
+    // Deactivate all rules
+    RULE_DEFS.forEach(function(r){ active[r.id] = false; });
+    buildSettingsUI();
+  }
+  doGenerateWithRetry(false);
+}
+
+function crazyGenerate() {
+  var tokens0 = TOKENS[MODE];
+  var pool0copy = POOL[MODE].slice();
+  // Shuffle resources completely randomly
+  var t = {};
+  var shuffled = shuffle(pool0copy);
+  ALL.forEach(function(hid,i){ t[hid] = shuffled[i]; });
+
+  // Build number pool
+  var numPool = tokens0.slice();
+  // Bias: put extra 2s and 12s by replacing some mid numbers
+  // Cluster 6s and 8s: find one random non-desert resource and assign all 6s/8s there
+  var nonDesert = ALL.filter(function(h){ return t[h]!=='desert'; });
+  var resources = RESOURCES.slice();
+  // Pick a "lucky" resource that gets all the good numbers
+  var lucky = resources[Math.floor(Math.random()*resources.length)];
+  var luckyHexes = nonDesert.filter(function(h){ return t[h]===lucky; });
+  var otherHexes = nonDesert.filter(function(h){ return t[h]!==lucky; });
+
+  // Sort good numbers first for lucky hexes
+  var goodNums = numPool.filter(function(n){ return n===6||n===8; });
+  var badNums  = numPool.filter(function(n){ return n===2||n===12; });
+  var restNums = numPool.filter(function(n){ return n!==6&&n!==8&&n!==2&&n!==12; });
+
+  // Assign: lucky hexes get good numbers first, then rest
+  var luckyPool = shuffle(goodNums.concat(badNums.slice(0,1)).concat(shuffle(restNums).slice(0, Math.max(0,luckyHexes.length - goodNums.length - 1))));
+  var leftoverBad = badNums.slice(1);
+  var leftoverRest = restNums.slice(Math.max(0, luckyHexes.length - goodNums.length - 1));
+  var otherPool = shuffle(leftoverBad.concat(leftoverRest));
+
+  var nums = {};
+  luckyHexes.forEach(function(h,i){ nums[h] = luckyPool[i % luckyPool.length]; });
+  otherHexes.forEach(function(h,i){ nums[h] = otherPool[i % otherPool.length]; });
+
+  return {tiles:t, nums:nums, harbors: assignHarbors(t)};
+}
+
 function doGenerateWithRetry(isInitial) {
   // Mark any previous run as cancelled
   generationCancelled = true;
@@ -1709,10 +1785,10 @@ function doGenerateWithRetry(isInitial) {
     if (generationCancelled) return;
 
     attempt++;
-    st.textContent = 'Versuch ' + attempt + ' von ' + MAX_ATTEMPTS + ' …';
+    st.textContent = crazyMode ? '💥 Chaos wird entfesselt…' : ('Versuch ' + attempt + ' von ' + MAX_ATTEMPTS + ' …');
 
 
-    var board = generate();
+    var board = crazyMode ? crazyGenerate() : generate();
 
     if (generationCancelled) return;
 
