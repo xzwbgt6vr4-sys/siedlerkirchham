@@ -166,6 +166,47 @@ h1 span{
   box-shadow:0 4px 20px rgba(200,0,0,0.35);
   white-space:nowrap;
 }
+#cheat-btn{
+  background:linear-gradient(135deg,#0d5c63,#1a8a94,#2bb5c0,#1a8a94,#0d5c63);
+  background-size:200% auto;
+  color:#fff;border:none;border-radius:10px;
+  padding:13px 18px;
+  font-family:'Cinzel',serif;font-size:13px;font-weight:700;
+  letter-spacing:0.06em;cursor:pointer;
+  transition:background-position 0.4s,transform 0.1s,box-shadow 0.2s;
+  box-shadow:0 4px 20px rgba(20,140,150,0.35);
+  white-space:nowrap;
+}
+#cheat-btn:hover{background-position:right center;box-shadow:0 6px 28px rgba(30,170,180,0.55);}
+#cheat-btn:active{transform:scale(0.98);}
+#cheat-btn.active{box-shadow:0 0 0 2px #ffd23c,0 4px 24px rgba(255,210,60,0.45);}
+#cheat-panel{
+  display:none;width:100%;margin-top:10px;
+  background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:10px;
+  padding:12px 14px;font-size:13px;color:var(--text);
+}
+.cheat-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px;font-family:'Cinzel',serif;color:var(--gold);}
+.cheat-hint{font-size:12px;color:var(--dim);margin-bottom:10px;}
+.cheat-nav{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;font-size:12px;color:var(--dim);}
+.cheat-mini{
+  background:rgba(180,140,50,0.12);border:1px solid var(--gold-dk);border-radius:7px;
+  padding:6px 14px;color:var(--gold);cursor:pointer;font-size:13px;font-family:'Cinzel',serif;
+}
+.cheat-mini:hover{background:rgba(180,140,50,0.22);}
+.cheat-spot{display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin:6px 0;}
+.cheat-badge{
+  display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;
+  background:#ffd23c;color:#1a1000;font-weight:800;font-size:13px;flex-shrink:0;
+}
+.cheat-res{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:12px;border:1px solid;background:rgba(0,0,0,0.25);font-size:12px;}
+.cheat-res b{display:inline-block;min-width:20px;text-align:center;padding:1px 4px;border-radius:10px;background:#f4e9c4;color:#1a1000;}
+.cheat-res b.hot{color:#c00000;}
+.cheat-pips{font-size:12px;color:var(--dim);}
+.cheat-harbor{font-size:11px;padding:2px 7px;border-radius:10px;background:rgba(60,100,180,0.35);border:1px solid rgba(120,160,230,0.5);}
+.cheat-sum{margin-top:8px;padding-top:8px;border-top:1px solid var(--border);font-size:12px;color:var(--dim);}
+.cheat-none{color:#e0a060;padding:6px 0;}
+.cheat-pulse{animation:cheatpulse 1.4s ease-in-out infinite;}
+@keyframes cheatpulse{0%,100%{stroke-opacity:1;}50%{stroke-opacity:0.35;}}
 #crazy-btn:hover{background-position:right center;box-shadow:0 6px 28px rgba(220,0,0,0.55);}
 #crazy-btn:active{transform:scale(0.98);}
 #crazy-btn.active{
@@ -624,11 +665,13 @@ svg{display:block;margin:0 auto;}
   <div class="gen-row">
     <button id="gen-btn">&#9881; Neues Spielfeld</button>
     <button id="crazy-btn" onclick="toggleCrazy()" title="Alles deaktivieren – maximales Chaos!">&#128165; Crazy</button>
+    <button id="cheat-btn" onclick="toggleCheat()" title="Beste Startsiedlungen berechnen">&#128373; Cheat</button>
     <div class="status" id="status">Bereit</div>
   </div>
 
   <!-- Board -->
   <div id="board-wrap"><svg id="brd"></svg></div>
+  <div id="cheat-panel"></div>
   <div id="legend"></div>
 </div>
 
@@ -732,7 +775,7 @@ var RULE_DEFS = [
   {id:'no_wood_brick',  label:'Holz und Lehm nie benachbart',          hint:'Verhindert starke Siedlungsfelder durch Trennung von Holz und Lehm', def:false},
   {id:'no_bad_cluster', label:'3/11 nie neben 2/12',                  hint:'Schwache Zahlen nicht zusammen häufen',       def:false},
   {id:'no_adj_same',   label:'Gleiche Zahlen nie benachbart',         hint:'Extra-streng: kein Zahlenpaar nebeneinander',def:false},
-  {id:'fair_dist',     label:'Gerechte Zahlenverteilung',             hint:'Gute Zahlen gleichmäßig auf alle Rohstoffe verteilt, kein Rohstoff bekommt alle schlechten',def:false},
+  {id:'fair_dist',     label:'Gerechte Zahlenverteilung',             hint:'Jeder Rohstoff bekommt ähnlich viele Wahrscheinlichkeitspunkte',def:false},
   {id:'show_harbors',  label:'Häfen anzeigen',                        hint:'Hafensymbole am Spielfeldrand einblenden',   def:false},
 ];
 
@@ -768,6 +811,30 @@ function buildAdj(layout) {
 }
 
 // ── SETTINGS UI ──────────────────────────────────────────────────────────────
+// Combinations that are mathematically impossible (proven by exhaustive search)
+var CONFLICTS = [
+  {modes:[6], rules:['no_same_res','no_wood_brick'],
+   why:'Bei 5–6 Spielern passen nicht genug Holz- und Lehmfelder ohne Nachbarn auf das Brett.'},
+  {modes:[4], rules:['no_same_res','no_wood_brick','desert_center'],
+   why:'Mit der Wüste in der Mitte lassen sich Holz und Lehm nicht mehr überall trennen.'}
+];
+function ruleLabel(id) {
+  return RULE_DEFS.filter(function(r){ return r.id === id; })[0].label;
+}
+// Switches off one rule of an impossible combination; returns a notice text or ''
+function resolveConflicts(changedId) {
+  var msg = '';
+  CONFLICTS.forEach(function(c) {
+    if (c.modes.indexOf(MODE) < 0) return;
+    if (!c.rules.every(function(r){ return active[r]; })) return;
+    var others = c.rules.filter(function(r){ return r !== changedId; });
+    var off = others[0];
+    active[off] = false;
+    msg = '„' + ruleLabel(off) + '“ wurde ausgeschaltet – zusammen mit den anderen gewählten Regeln gibt es keine Lösung. ' + c.why;
+  });
+  return msg;
+}
+
 function buildSettingsUI() {
   var grid = document.getElementById('rules-grid');
   grid.innerHTML = '';
@@ -779,15 +846,26 @@ function buildSettingsUI() {
     if (rule.only6 && MODE !== 6) wrap.style.display = 'none';
 
     var div = document.createElement('div');
-    div.className = 'rule-toggle' + (active[rule.id]?' active':'') + (crazyMode?' disabled':'');
+    var locked = crazyMode && rule.id !== 'show_harbors';
+    div.className = 'rule-toggle' + (active[rule.id]?' active':'') + (locked?' disabled':'');
     div.dataset.id = rule.id;
     div.innerHTML =
       '<div class="tbox"><span class="tcheck">&#10003;</span></div>'+
       '<div class="rtext">'+rule.label+'<small>'+rule.hint+'</small></div>';
 
     div.addEventListener('click', function(){
-      if (crazyMode) return;
+      if (locked) return;
       active[rule.id] = !active[rule.id];
+      if (active[rule.id]) {
+        var note = resolveConflicts(rule.id);
+        if (note) {
+          buildSettingsUI();
+          var st0 = document.getElementById('status');
+          st0.className = 'status fail';
+          st0.textContent = note;
+          return;
+        }
+      }
       div.classList.toggle('active', active[rule.id]);
 
     });
@@ -820,35 +898,66 @@ function generate() {
   var DESERT_CENTER_HEX = 9; // middle hex of the 5-hex middle row
   var desertFixed = (MODE === 4 && active['desert_center']);
 
-  for (var attempt=0; attempt<600000; attempt++) {
-    var pool = shuffle(pool0);
-    var t = {};
-    if (desertFixed) {
-      // remove one desert from pool and fix it at center
-      var dIdx = pool.indexOf('desert');
-      pool.splice(dIdx, 1);
-      // assign remaining pool to all hexes except center
-      var otherHexes = ALL.filter(function(h){return h !== DESERT_CENTER_HEX;});
-      otherHexes.forEach(function(hid,i){t[hid]=pool[i];});
-      t[DESERT_CENTER_HEX] = 'desert';
-    } else {
-      ALL.forEach(function(hid,i){t[hid]=pool[i];});
-    }
-    if (!active['no_same_res'] && !active['no_wood_brick']){tiles=t;break;}
-    var ok=true;
-    for (var hi=0;hi<ALL.length;hi++){
-      var hid=ALL[hi];
-      if(t[hid]==='desert') continue;
-      var nb=ADJ[hid];
-      for(var ni=0;ni<nb.length;ni++){
-        if(active['no_same_res'] && t[nb[ni]]===t[hid]){ok=false;break;}
-        if(active['no_wood_brick'] && ((t[hid]==='wood'&&t[nb[ni]]==='brick')||(t[hid]==='brick'&&t[nb[ni]]==='wood'))){ok=false;break;}
-      }
-      if(!ok) break;
-    }
-    if(ok){tiles=t;break;}
+  function resConflict(x, y) {
+    if (x === 'desert' || y === 'desert') return false;
+    if (active['no_same_res'] && x === y) return true;
+    if (active['no_wood_brick'] && ((x==='wood'&&y==='brick')||(x==='brick'&&y==='wood'))) return true;
+    return false;
   }
-  if(!tiles) return null;
+
+  function placeResources() {
+    for (var restart=0; restart<80; restart++) {
+      var cnt = {};
+      pool0.forEach(function(r){ cnt[r]=(cnt[r]||0)+1; });
+      var t = {}, order = ALL.slice(), nodes = 0, MAXN = 20000;
+      if (desertFixed) {
+        t[DESERT_CENTER_HEX] = 'desert'; cnt.desert--;
+        order = order.filter(function(h){ return h !== DESERT_CENTER_HEX; });
+      }
+      var place = function(i) {
+        if (i === order.length) return true;
+        if (++nodes > MAXN) return false;
+        var h = order[i], nb = ADJ[h];
+        // candidate types weighted by remaining count, in random order
+        var bag = [];
+        for (var r in cnt) for (var c=0; c<cnt[r]; c++) bag.push(r);
+        bag = shuffle(bag);
+        var seen = {};
+        for (var k=0; k<bag.length; k++) {
+          var r2 = bag[k];
+          if (seen[r2]) continue; seen[r2] = true;
+          var bad = false;
+          for (var q=0; q<nb.length; q++) {
+            if (t[nb[q]] !== undefined && resConflict(r2, t[nb[q]])) { bad = true; break; }
+          }
+          if (bad) continue;
+          t[h] = r2; cnt[r2]--;
+          if (place(i+1)) return true;
+          delete t[h]; cnt[r2]++;
+          if (nodes > MAXN) return false;
+        }
+        return false;
+      };
+      if (place(0)) return t;
+    }
+    return null;
+  }
+
+  if (active['no_same_res'] || active['no_wood_brick']) {
+    tiles = placeResources();
+  } else {
+    var pool = shuffle(pool0);
+    var t0r = {};
+    if (desertFixed) {
+      pool.splice(pool.indexOf('desert'), 1);
+      ALL.filter(function(h){return h !== DESERT_CENTER_HEX;}).forEach(function(hid,i){ t0r[hid]=pool[i]; });
+      t0r[DESERT_CENTER_HEX] = 'desert';
+    } else {
+      ALL.forEach(function(hid,i){ t0r[hid]=pool[i]; });
+    }
+    tiles = t0r;
+  }
+  if (!tiles) return null;
 
   // Step 2: number placement (backtracking)
   var land = ALL.filter(function(hid){return tiles[hid]!=='desert';});
@@ -865,12 +974,17 @@ function generate() {
   var resNeedsGood={},resNeedsBad={},resCounts={},resAssigned={};
   // for new 1-4 rules: track which nums each resource already has
   var resHasGood={},resHasBad={},resHas6={},resHas8={};
+  // fair_dist: running sum of probability dots per resource + global mean dots per tile
+  var resSum={}, FAIR_TOL=(MODE===4)?0.7:0.5, MEAN_DOTS=0;
+  tokens0.forEach(function(tk){ MEAN_DOTS+=DOTS[tk]; });
+  MEAN_DOTS/=tokens0.length;
   RESOURCES.forEach(function(r){
     resNeedsGood[r]=true; resNeedsBad[r]=true;
     resCounts[r]=land.filter(function(h){return tiles[h]===r;}).length;
     resAssigned[r]=0;
     resHasGood[r]=false; resHasBad[r]=false;
     resHas6[r]=false; resHas8[r]=false;
+    resSum[r]=0;
   });
 
   var MAX_BT=300000, btCount=0;
@@ -880,7 +994,6 @@ function generate() {
     if(btCount>MAX_BT) return false;
     if(i===land.length){
       if(active['each_res_good']){for(var ri=0;ri<RESOURCES.length;ri++) if(!resHasGood[RESOURCES[ri]]) return false;}
-      if(active['fair_dist']){for(var ri2=0;ri2<RESOURCES.length;ri2++) if(!resHasGood[RESOURCES[ri2]]) return false;}
 
       return true;
     }
@@ -907,6 +1020,13 @@ function generate() {
         if(n===6 && resHas8[res]) continue;
         if(n===8 && resHas6[res]) continue;
       }
+      if(active['fair_dist']){
+        // keep this resource's average dots/tile near the global mean (early pruning)
+        var cntR=resCounts[res], restR=remaining-1, ns=resSum[res]+DOTS[n];
+        var lo=(MEAN_DOTS-FAIR_TOL*0.65)*cntR, hi=(MEAN_DOTS+FAIR_TOL*0.65)*cntR;
+        if(ns+restR*1 > hi+1e-9) continue;
+        if(ns+restR*5 < lo-1e-9) continue;
+      }
 
       cands.push(n);
     }
@@ -914,39 +1034,44 @@ function generate() {
     // Pruning hints for last tile of a resource
     if(remaining===1){
       if(active['each_res_good'] && !resHasGood[res]){var gc=cands.filter(function(n){return GOOD[n];});if(gc.length) cands=gc;}
-      if(active['fair_dist'] && !resHasGood[res]){var gc2=cands.filter(function(n){return GOOD[n];});if(gc2.length) cands=gc2;}
-    }
-    // fair_dist: if this resource already has 2 good numbers, prefer non-good for remaining tiles
-    if(active['fair_dist'] && (resHas6[res]&&resHas8[res]) && remaining>1){
-      var ng=cands.filter(function(n){return !GOOD[n];});if(ng.length) cands=ng;
     }
     cands=shuffle(cands);
 
     for(var ci=0;ci<cands.length;ci++){
       var n=cands[ci];
-      nums[hid]=n; pool2[n]--;resAssigned[res]++;
+      nums[hid]=n; pool2[n]--;resAssigned[res]++; resSum[res]+=DOTS[n];
       var wng=resNeedsGood[res], wnb=resNeedsBad[res];
       var whg=resHasGood[res], whb=resHasBad[res];
       var wh6=resHas6[res], wh8=resHas8[res];      if(GOOD[n]){ resNeedsGood[res]=false; resHasGood[res]=true; }
       if(BAD[n]) { resNeedsBad[res]=false;  resHasBad[res]=true;  }
       if(n===6)  resHas6[res]=true;
       if(n===8)  resHas8[res]=true;      if(bt(i+1)) return true;
-      delete nums[hid]; pool2[n]++;resAssigned[res]--;
+      delete nums[hid]; pool2[n]++;resAssigned[res]--; resSum[res]-=DOTS[n];
       resNeedsGood[res]=wng; resNeedsBad[res]=wnb;
       resHasGood[res]=whg;   resHasBad[res]=whb;
       resHas6[res]=wh6;      resHas8[res]=wh8;    }
     return false;
   }
 
-  for(var s=0;s<40;s++){
+  // fair_dist: every resource gets a similar average number of probability dots per tile
+  function fairOK(){
+    var sum={},cn={};
+    land.forEach(function(h){var r=tiles[h]; sum[r]=(sum[r]||0)+DOTS[nums[h]]; cn[r]=(cn[r]||0)+1;});
+    var mn=99,mx=-1;
+    for(var r in sum){var a=sum[r]/cn[r]; if(a<mn)mn=a; if(a>mx)mx=a;}
+    return (mx-mn)<=FAIR_TOL;
+  }
+  var RESTARTS = active['fair_dist'] ? 600 : 40;
+  for(var s=0;s<RESTARTS;s++){
     btCount=0; nums={};
     RESOURCES.forEach(function(r){
       resNeedsGood[r]=true; resNeedsBad[r]=true; resAssigned[r]=0;
-      resHasGood[r]=false; resHasBad[r]=false; resHas6[r]=false; resHas8[r]=false;
+      resHasGood[r]=false; resHasBad[r]=false; resHas6[r]=false; resHas8[r]=false; resSum[r]=0;
     });
     pool2={};tokens0.forEach(function(tk){pool2[tk]=(pool2[tk]||0)+1;});
     land=shuffle(land);
     if(bt(0)){
+      if(active['fair_dist'] && !fairOK()) continue;
       var result={};
       ALL.forEach(function(hid){result[hid]=nums[hid]||null;});
       return {tiles:tiles,nums:result};
@@ -1009,6 +1134,243 @@ function edgeMidAndNormal(cx, cy, S, edge) {
 }
 
 // ── DRAW ─────────────────────────────────────────────────────────────────────
+// ── CHEAT: beste Startsiedlungen ────────────────────────────────────────────
+var lastGeo = null, lastHarborList = null;
+var cheat = {on:false, occupied:{}, sugg:[], idx:0, board:null, geo:null};
+var CHEAT_ICON = {wood:'🌲', wheat:'🌾', sheep:'🐑', ore:'⛰', brick:'🧱'};
+
+// All intersections of the board, built with the same geometry as draw()
+function cheatBuildGeometry(board) {
+  var S = lastGeo.S, offX = lastGeo.offX, offY = lastGeo.offY;
+  var layout = LAYOUTS[MODE];
+  var ids = buildAdj(layout).all;
+  var verts = [], vid = {}, tol = S*0.3;
+  ids.forEach(function(id) {
+    var c = hexCenter(layout, id, S, offX, offY);
+    vid[id] = [];
+    for (var k=0; k<6; k++) {
+      var a = Math.PI/180 * (60*k - 30);
+      var x = c.cx + S*Math.cos(a), y = c.cy + S*Math.sin(a);
+      var found = -1;
+      for (var v=0; v<verts.length; v++) {
+        var dx = verts[v].x - x, dy = verts[v].y - y;
+        if (dx*dx + dy*dy < tol*tol) { found = v; break; }
+      }
+      if (found < 0) {
+        verts.push({x:x, y:y, n:1, hexes:[], nb:[], harbors:[], prod:[]});
+        found = verts.length - 1;
+      } else {
+        var V = verts[found];
+        V.x = (V.x*V.n + x)/(V.n+1);
+        V.y = (V.y*V.n + y)/(V.n+1);
+        V.n++;
+      }
+      verts[found].hexes.push(id);
+      vid[id].push(found);
+    }
+  });
+  // neighbouring intersections = ends of a hex edge
+  ids.forEach(function(id) {
+    for (var k=0; k<6; k++) {
+      var a = vid[id][k], b = vid[id][(k+1)%6];
+      if (verts[a].nb.indexOf(b) < 0) verts[a].nb.push(b);
+      if (verts[b].nb.indexOf(a) < 0) verts[b].nb.push(a);
+    }
+  });
+  // harbors sit on hex edge e = between vertex e and e+1
+  if (lastHarborList) {
+    lastHarborList.forEach(function(h) {
+      [vid[h.hex][h.edge], vid[h.hex][(h.edge+1)%6]].forEach(function(vi) {
+        verts[vi].harbors.push(h.type);
+      });
+    });
+  }
+  // what each intersection produces
+  verts.forEach(function(V) {
+    V.hexes.forEach(function(h) {
+      var r = board.tiles[h], n = board.nums[h];
+      if (r !== 'desert' && n) V.prod.push({hex:h, res:r, num:n, dots:DOTS[n]||0});
+    });
+    V.prod.sort(function(a,b){ return b.dots - a.dots; });
+  });
+  return {verts:verts, S:S};
+}
+
+// Rating of two starting settlements: probability dots + spread over resources,
+// minus duplicate numbers / shared hexes, plus a small harbor bonus
+function cheatScore(a, b) {
+  var items = a.prod.concat(b.prod);
+  var pips = 0, resSet = {}, hexSeen = {}, nums = [], shared = 0;
+  items.forEach(function(p) {
+    pips += p.dots; resSet[p.res] = 1;
+    if (hexSeen[p.hex]) shared++;
+    else { hexSeen[p.hex] = 1; nums.push(p.num); }
+  });
+  var cov = Object.keys(resSet).length;
+  var uniq = {};
+  nums.forEach(function(n){ uniq[n] = 1; });
+  var dup = nums.length - Object.keys(uniq).length;
+  var hb = 0;
+  [a, b].forEach(function(v) {
+    v.harbors.forEach(function(t) {
+      if (t === '3:1') hb += 0.7;
+      else if (resSet[t]) hb += 1.6;
+      else hb += 0.2;
+    });
+  });
+  return {score: pips + 3.5*cov - 3*dup - 2*shared + hb,
+          pips:pips, cov:cov, dup:dup, shared:shared};
+}
+
+function cheatCompute() {
+  var V = cheat.geo.verts, blocked = {};
+  Object.keys(cheat.occupied).forEach(function(k) {
+    if (!cheat.occupied[k]) return;
+    k = +k; blocked[k] = true;
+    V[k].nb.forEach(function(n){ blocked[n] = true; });   // distance rule
+  });
+  var cand = [];
+  for (var i=0; i<V.length; i++) if (!blocked[i] && V[i].prod.length) cand.push(i);
+  var best = [];
+  for (var x=0; x<cand.length; x++) {
+    for (var y=x+1; y<cand.length; y++) {
+      var a = cand[x], b = cand[y];
+      if (V[a].nb.indexOf(b) >= 0) continue;               // two own spots must not touch
+      var r = cheatScore(V[a], V[b]);
+      r.a = a; r.b = b;
+      best.push(r);
+      best.sort(function(p,q){ return q.score - p.score; });
+      if (best.length > 3) best.pop();
+    }
+  }
+  cheat.sugg = best;
+  if (cheat.idx >= best.length) cheat.idx = 0;
+}
+
+function cheatRender() {
+  var old = document.getElementById('cheat-layer');
+  if (old && old.parentNode) old.parentNode.removeChild(old);
+  if (!cheat.on || !cheat.geo) return;
+  var svg = document.getElementById('brd');
+  var G = cheat.geo, S = G.S;
+  var g = svgEl('g', {id:'cheat-layer'});
+  var hitR = Math.max(11, S*0.38);
+  var u = S*0.2;
+
+  G.verts.forEach(function(v, i) {
+    if (cheat.occupied[i]) {
+      g.appendChild(svgEl('polygon', {
+        points: [[-u,u],[-u,-0.2*u],[0,-1.25*u],[u,-0.2*u],[u,u]]
+          .map(function(p){ return (v.x+p[0]).toFixed(1)+','+(v.y+p[1]).toFixed(1); }).join(' '),
+        fill:'#d93a3a', stroke:'#fff', 'stroke-width':'1.8', 'stroke-linejoin':'round',
+        'pointer-events':'none'}));
+    } else {
+      g.appendChild(svgEl('circle', {cx:v.x, cy:v.y, r:Math.max(3, S*0.09),
+        fill:'rgba(255,255,255,0.55)', stroke:'rgba(0,0,0,0.35)', 'stroke-width':'1',
+        'pointer-events':'none'}));
+    }
+  });
+
+  var cur = cheat.sugg[cheat.idx];
+  if (cur) {
+    [cur.a, cur.b].forEach(function(vi, k) {
+      var v = G.verts[vi];
+      g.appendChild(svgEl('circle', {cx:v.x, cy:v.y, r:S*0.36,
+        fill:'rgba(255,210,60,0.30)', stroke:'#ffd23c', 'stroke-width':'3',
+        'class':'cheat-pulse', 'pointer-events':'none'}));
+      var numAttr = {x:v.x, y:v.y + S*0.14, 'text-anchor':'middle',
+        'font-size':Math.round(S*0.42), 'font-weight':'800',
+        'font-family':'Cinzel,Georgia,serif', 'pointer-events':'none'};
+      // dark outline layer first, white digit on top
+      g.appendChild(svgEl('text', Object.assign({fill:'#000', stroke:'#000', 'stroke-width':'3.5', 'stroke-linejoin':'round'}, numAttr), String(k+1)));
+      g.appendChild(svgEl('text', Object.assign({fill:'#fff'}, numAttr), String(k+1)));
+    });
+  }
+
+  G.verts.forEach(function(v, i) {
+    var hit = svgEl('circle', {cx:v.x, cy:v.y, r:hitR, fill:'transparent'});
+    hit.style.cursor = 'pointer';
+    hit.addEventListener('click', function(e) { e.stopPropagation(); cheatToggleSpot(i); });
+    g.appendChild(hit);
+  });
+  svg.appendChild(g);
+}
+
+function cheatSpotHtml(vi, k) {
+  var v = cheat.geo.verts[vi], pips = 0;
+  var h = '<div class="cheat-spot"><span class="cheat-badge">' + (k+1) + '</span>';
+  v.prod.forEach(function(p) {
+    var m = RESINFO[p.res]; pips += p.dots;
+    h += '<span class="cheat-res" style="border-color:' + m.color + '">' + (CHEAT_ICON[p.res]||'') + ' ' + m.label +
+         ' <b' + ((p.num===6||p.num===8) ? ' class="hot"' : '') + '>' + p.num + '</b></span>';
+  });
+  h += '<span class="cheat-pips">' + pips + ' &#9679;</span>';
+  v.harbors.forEach(function(t) {
+    h += '<span class="cheat-harbor">' + (t==='3:1' ? '3:1-Hafen' : '2:1 ' + RESINFO[t].label) + '</span>';
+  });
+  return h + '</div>';
+}
+
+function cheatRenderPanel() {
+  var p = document.getElementById('cheat-panel');
+  if (!cheat.on) { p.style.display = 'none'; return; }
+  p.style.display = 'block';
+  if (!cheat.geo) {
+    p.innerHTML = '<div class="cheat-head"><strong>&#128373; Cheat-Modus</strong></div>' +
+                  '<div class="cheat-none">Bitte zuerst ein Spielfeld erzeugen.</div>';
+    return;
+  }
+  var occN = Object.keys(cheat.occupied).filter(function(k){ return cheat.occupied[k]; }).length;
+  var h = '<div class="cheat-head"><strong>&#128373; Cheat-Modus</strong>' +
+          '<button class="cheat-mini" onclick="cheatClearOcc()">Zurücksetzen</button></div>';
+  h += '<div class="cheat-hint">Tippe auf die Kreuzungen, auf denen schon fremde Siedlungen stehen (' + occN + ' markiert).' +
+       (lastHarborList ? '' : ' Häfen werden nur mit „Häfen anzeigen“ berücksichtigt.') + '</div>';
+  if (!cheat.sugg.length) {
+    h += '<div class="cheat-none">Es sind keine zwei freien Kreuzungen mehr übrig.</div>';
+  } else {
+    var s = cheat.sugg[cheat.idx];
+    h += '<div class="cheat-nav"><button class="cheat-mini" onclick="cheatStep(-1)">&#9664;</button>' +
+         '<span>Vorschlag ' + (cheat.idx+1) + ' von ' + cheat.sugg.length + ' &middot; Wertung ' + s.score.toFixed(1) + '</span>' +
+         '<button class="cheat-mini" onclick="cheatStep(1)">&#9654;</button></div>';
+    h += cheatSpotHtml(s.a, 0) + cheatSpotHtml(s.b, 1);
+    h += '<div class="cheat-sum">' + s.cov + ' von 5 Rohstoffen &middot; ' + s.pips + ' Wahrscheinlichkeitspunkte &middot; ' +
+         (s.dup ? s.dup + ' doppelte Zahl' + (s.dup>1?'en':'') : 'keine doppelten Zahlen') +
+         (s.shared ? ' &middot; ein Feld doppelt genutzt' : '') + '</div>';
+  }
+  p.innerHTML = h;
+}
+
+function cheatUpdate() {
+  if (cheat.on && cheat.geo) cheatCompute(); else cheat.sugg = [];
+  cheatRender();
+  cheatRenderPanel();
+}
+function cheatAfterDraw(board) {
+  cheat.geo = cheatBuildGeometry(board);
+  if (cheat.board !== board) { cheat.board = board; cheat.occupied = {}; cheat.idx = 0; }
+  cheatUpdate();
+}
+function cheatReset() {
+  cheat.occupied = {}; cheat.idx = 0; cheat.board = null; cheat.geo = null; cheat.sugg = [];
+  cheatUpdate();
+}
+function toggleCheat() {
+  cheat.on = !cheat.on;
+  document.getElementById('cheat-btn').classList.toggle('active', cheat.on);
+  cheatUpdate();
+}
+function cheatToggleSpot(i) {
+  cheat.occupied[i] = !cheat.occupied[i];
+  cheat.idx = 0;
+  cheatUpdate();
+}
+function cheatClearOcc() { cheat.occupied = {}; cheat.idx = 0; cheatUpdate(); }
+function cheatStep(d) {
+  if (!cheat.sugg.length) return;
+  cheat.idx = (cheat.idx + d + cheat.sugg.length) % cheat.sugg.length;
+  cheatRender(); cheatRenderPanel();
+}
+
 function draw(board) {
   var svg=document.getElementById('brd');
   svg.innerHTML='';
@@ -1028,6 +1390,8 @@ function draw(board) {
   var H = layout.length*HH*0.866 + HH + 16 + seaPad;
   var offX = active['show_harbors'] ? Math.ceil(S * Math.sqrt(3)) : 0;
   var offY = active['show_harbors'] ? Math.ceil(S * Math.sqrt(3)) : 0;
+  lastGeo = {S:S, offX:offX, offY:offY};
+  lastHarborList = null;
 
   svg.setAttribute('width', W);
   svg.setAttribute('height', H);
@@ -1081,6 +1445,7 @@ function draw(board) {
   // ── Draw sea ring ──
   if (active['show_harbors']) {
     var harborList = assignHarbors(board);
+    lastHarborList = harborList;
     var harborLookup = {};
     harborList.forEach(function(h){ harborLookup[h.hex+':'+h.edge] = h.type; });
 
@@ -1243,6 +1608,8 @@ function draw(board) {
 
 
   // ── Legend ──
+  cheatAfterDraw(board);
+
   var leg = document.getElementById('legend');
   leg.innerHTML = '';
   var cnt = {};
@@ -1280,27 +1647,22 @@ function setMode(m) {
   document.getElementById('btn-4').classList.toggle('active', m===4);
   document.getElementById('btn-6').classList.toggle('active', m===6);
 
-  // Show/hide mode-specific rules
-  var grid = document.getElementById('rules-grid');
-  grid.querySelectorAll('[data-ruleid]').forEach(function(wrap){
-    var rid = wrap.dataset.ruleid;
-    var rule = RULE_DEFS.filter(function(r){return r.id===rid;})[0];
-    if (rule && rule.only4) {
-      wrap.style.display = (m===4) ? '' : 'none';
-      if (m!==4) active[rid] = false;
-    }
-    if (rule && rule.only6) {
-      wrap.style.display = (m===6) ? '' : 'none';
-      if (m!==6) active[rid] = false;
-    }
+  // Switch off rules that only exist in the other mode, then rebuild the toggles
+  RULE_DEFS.forEach(function(rule){
+    if (rule.only4 && m!==4) active[rule.id] = false;
+    if (rule.only6 && m!==6) active[rule.id] = false;
   });
+  var modeNote = resolveConflicts(null);
+  buildSettingsUI();
 
   // Reset board – do NOT auto-start; wait for user to press the button
   lastBoard = null;
+  cheatReset();
   document.getElementById('brd').innerHTML = '';
   document.getElementById('legend').innerHTML = '';
   document.getElementById('status').className = 'status';
-  document.getElementById('status').textContent = 'Modus gewechselt – bitte „Neues Spielfeld“ drücken.';
+  document.getElementById('status').textContent = modeNote ? (modeNote + ' Bitte „Neues Spielfeld“ drücken.') : 'Modus gewechselt – bitte „Neues Spielfeld“ drücken.';
+  if (modeNote) document.getElementById('status').className = 'status fail';
   document.getElementById('gen-btn').disabled = false;
   document.getElementById('gen-btn').innerHTML = '&#9881; Neues Spielfeld';
 }
@@ -1721,53 +2083,54 @@ buildSettingsUI();
 
 var generationCancelled = false;
 
+var savedActive = null;
 function toggleCrazy() {
   crazyMode = !crazyMode;
   var btn = document.getElementById('crazy-btn');
   btn.classList.toggle('active', crazyMode);
   if (crazyMode) {
-    // Deactivate all rules
-    RULE_DEFS.forEach(function(r){ active[r.id] = false; });
-    buildSettingsUI();
+    // remember the user's rules, switch all generator rules off (harbor display stays as it is)
+    savedActive = {};
+    RULE_DEFS.forEach(function(r){
+      savedActive[r.id] = active[r.id];
+      if (r.id !== 'show_harbors') active[r.id] = false;
+    });
+  } else if (savedActive) {
+    RULE_DEFS.forEach(function(r){ if (r.id !== 'show_harbors') active[r.id] = savedActive[r.id]; });
+    savedActive = null;
   }
+  buildSettingsUI();
   doGenerateWithRetry(false);
 }
+window.toggleCrazy = toggleCrazy; // called from the button's inline onclick
 
 function crazyGenerate() {
-  var tokens0 = TOKENS[MODE];
-  var pool0copy = POOL[MODE].slice();
-  // Shuffle resources completely randomly
+  var g = buildAdj(LAYOUTS[MODE]);
+  var ALL = g.all;
+  var res = shuffle(POOLS[MODE]);
   var t = {};
-  var shuffled = shuffle(pool0copy);
-  ALL.forEach(function(hid,i){ t[hid] = shuffled[i]; });
+  ALL.forEach(function(hid,i){ t[hid] = res[i]; });
+  var land = ALL.filter(function(h){ return t[h] !== 'desert'; });
 
-  // Build number pool
-  var numPool = tokens0.slice();
-  // Bias: put extra 2s and 12s by replacing some mid numbers
-  // Cluster 6s and 8s: find one random non-desert resource and assign all 6s/8s there
-  var nonDesert = ALL.filter(function(h){ return t[h]!=='desert'; });
-  var resources = RESOURCES.slice();
-  // Pick a "lucky" resource that gets all the good numbers
-  var lucky = resources[Math.floor(Math.random()*resources.length)];
-  var luckyHexes = nonDesert.filter(function(h){ return t[h]===lucky; });
-  var otherHexes = nonDesert.filter(function(h){ return t[h]!==lucky; });
+  // One resource is the lucky one (best numbers), another the unlucky one (worst numbers)
+  var kinds = shuffle(RESOURCES);
+  var lucky = kinds[0], unlucky = kinds[1];
+  var luckyHexes   = land.filter(function(h){ return t[h] === lucky; });
+  var unluckyHexes = land.filter(function(h){ return t[h] === unlucky; });
+  var restHexes    = land.filter(function(h){ return t[h] !== lucky && t[h] !== unlucky; });
 
-  // Sort good numbers first for lucky hexes
-  var goodNums = numPool.filter(function(n){ return n===6||n===8; });
-  var badNums  = numPool.filter(function(n){ return n===2||n===12; });
-  var restNums = numPool.filter(function(n){ return n!==6&&n!==8&&n!==2&&n!==12; });
-
-  // Assign: lucky hexes get good numbers first, then rest
-  var luckyPool = shuffle(goodNums.concat(badNums.slice(0,1)).concat(shuffle(restNums).slice(0, Math.max(0,luckyHexes.length - goodNums.length - 1))));
-  var leftoverBad = badNums.slice(1);
-  var leftoverRest = restNums.slice(Math.max(0, luckyHexes.length - goodNums.length - 1));
-  var otherPool = shuffle(leftoverBad.concat(leftoverRest));
-
+  // all tokens sorted by probability (best first; ties stay random)
+  var sorted = shuffle(TOKENS[MODE]).sort(function(a,b){ return DOTS[b] - DOTS[a]; });
   var nums = {};
-  luckyHexes.forEach(function(h,i){ nums[h] = luckyPool[i % luckyPool.length]; });
-  otherHexes.forEach(function(h,i){ nums[h] = otherPool[i % otherPool.length]; });
+  luckyHexes.forEach(function(h,i){ nums[h] = sorted[i]; });
+  var worst = sorted.slice(sorted.length - unluckyHexes.length);
+  unluckyHexes.forEach(function(h,i){ nums[h] = worst[i]; });
+  var middle = shuffle(sorted.slice(luckyHexes.length, sorted.length - unluckyHexes.length));
+  restHexes.forEach(function(h,i){ nums[h] = middle[i]; });
 
-  return {tiles:t, nums:nums, harbors: assignHarbors(t)};
+  var result = {};
+  ALL.forEach(function(h){ result[h] = nums[h] || null; });
+  return {tiles:t, nums:result};
 }
 
 function doGenerateWithRetry(isInitial) {
